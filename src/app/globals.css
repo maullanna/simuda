@@ -1,0 +1,56 @@
+@import "tailwindcss";
+
+/* Token warna Material 3, seed hijau #2E6B30.
+   Nama variabel --md-sys-* ini juga dibaca otomatis oleh @material/web nanti. */
+:root {
+  --md-sys-color-primary: #2e6b30;
+  --md-sys-color-on-primary: #ffffff;
+  --md-sys-color-primary-container: #b7f0ae;
+  --md-sys-color-on-primary-container: #002204;
+  --md-sys-color-secondary-container: #d7e8cd;
+  --md-sys-color-on-secondary-container: #102010;
+  --md-sys-color-tertiary-container: #c9e6ff;
+  --md-sys-color-on-tertiary-container: #001d33;
+  --md-sys-color-surface: #f7fbf1;
+  --md-sys-color-surface-container-low: #f1f5eb;
+  --md-sys-color-surface-container: #ebefe5;
+  --md-sys-color-surface-container-high: #e5eadf;
+  --md-sys-color-surface-container-highest: #e0e4da;
+  --md-sys-color-on-surface: #191d17;
+  --md-sys-color-on-surface-variant: #42493f;
+  --md-sys-color-outline: #72796e;
+  --md-sys-color-outline-variant: #c2c9bc;
+  --md-sys-color-warning-container: #ffdcc2;
+  --md-sys-color-on-warning-container: #4a2800;
+}
+
+/* Menghubungkan token di atas ke class Tailwind,
+   misalnya bg-primary-container atau text-on-surface-variant. */
+@theme inline {
+  --color-primary: var(--md-sys-color-primary);
+  --color-on-primary: var(--md-sys-color-on-primary);
+  --color-primary-container: var(--md-sys-color-primary-container);
+  --color-on-primary-container: var(--md-sys-color-on-primary-container);
+  --color-secondary-container: var(--md-sys-color-secondary-container);
+  --color-on-secondary-container: var(--md-sys-color-on-secondary-container);
+  --color-tertiary-container: var(--md-sys-color-tertiary-container);
+  --color-on-tertiary-container: var(--md-sys-color-on-tertiary-container);
+  --color-surface: var(--md-sys-color-surface);
+  --color-surface-low: var(--md-sys-color-surface-container-low);
+  --color-surface-mid: var(--md-sys-color-surface-container);
+  --color-surface-high: var(--md-sys-color-surface-container-high);
+  --color-surface-highest: var(--md-sys-color-surface-container-highest);
+  --color-on-surface: var(--md-sys-color-on-surface);
+  --color-on-surface-variant: var(--md-sys-color-on-surface-variant);
+  --color-outline: var(--md-sys-color-outline);
+  --color-outline-variant: var(--md-sys-color-outline-variant);
+  --color-warning-container: var(--md-sys-color-warning-container);
+  --color-on-warning-container: var(--md-sys-color-on-warning-container);
+  --font-sans: var(--font-jakarta), system-ui, sans-serif;
+}
+
+body {
+  background: var(--md-sys-color-surface);
+  color: var(--md-sys-color-on-surface);
+  font-family: var(--font-sans);
+}
