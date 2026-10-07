@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { MaterialRegister } from "@/components/MaterialRegister";
 import { Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 
@@ -17,7 +18,10 @@ export const metadata: Metadata = {
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="id" className={`${jakarta.variable} h-full antialiased`}>
-      <body className="min-h-full">{children}</body>
+      <body className="min-h-full">
+        <MaterialRegister />
+        {children}
+      </body>
     </html>
   );
 }

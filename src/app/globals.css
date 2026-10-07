@@ -22,6 +22,7 @@
   --md-sys-color-outline-variant: #c2c9bc;
   --md-sys-color-warning-container: #ffdcc2;
   --md-sys-color-on-warning-container: #4a2800;
+  --md-ref-typeface-plain: var(--font-jakarta), system-ui, sans-serif;
 }
 
 /* Menghubungkan token di atas ke class Tailwind,
@@ -53,4 +54,24 @@ body {
   background: var(--md-sys-color-surface);
   color: var(--md-sys-color-on-surface);
   font-family: var(--font-sans);
+}
+/* Padding tombol md-*. JANGAN DIHAPUS.
+   Preflight Tailwind memberi padding: 0 ke semua elemen, termasuk <md-...>.
+   Padding asli tombol Material ada di :host (di dalam shadow DOM) dan kalah
+   dari CSS halaman, sehingga teks menempel ke tepi. Aturan ini mengembalikan
+   padding memakai nilai bawaan tombol itu sendiri (variabel --_*). */
+:where(md-filled-button, md-filled-tonal-button, md-outlined-button, md-elevated-button, md-text-button) {
+  padding-block: calc((var(--_container-height) - max(var(--_label-text-line-height), var(--_icon-size))) / 2);
+  padding-inline-start: var(--_leading-space);
+  padding-inline-end: var(--_trailing-space);
+}
+
+:where(md-filled-button, md-filled-tonal-button, md-outlined-button, md-elevated-button, md-text-button)[has-icon]:not([trailing-icon]) {
+  padding-inline-start: var(--_with-leading-icon-leading-space);
+  padding-inline-end: var(--_with-leading-icon-trailing-space);
+}
+
+:where(md-filled-button, md-filled-tonal-button, md-outlined-button, md-elevated-button, md-text-button)[has-icon][trailing-icon] {
+  padding-inline-start: var(--_with-trailing-icon-leading-space);
+  padding-inline-end: var(--_with-trailing-icon-trailing-space);
 }
