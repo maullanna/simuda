@@ -19,6 +19,8 @@ type MdTextFieldProps = MdElementProps<{
   name?: string;
   type?: string;
   placeholder?: string;
+  max?: string;
+  autocomplete?: string;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;

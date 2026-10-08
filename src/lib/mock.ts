@@ -2,6 +2,14 @@
 // Nanti semua ini diganti dengan data dari Prisma.
 
 import type { Peserta } from "./peserta";
+import {
+  geserTanggal,
+  hariDalamPekan,
+  pesertaSasaran,
+  type Kehadiran,
+  type Sasaran,
+  type Sesi,
+} from "./sesi";
 
 export const penggunaAktif = {
   nama: "Ahmad Fauzi",
@@ -35,3 +43,94 @@ export const daftarPeserta: Peserta[] = [
   { id: "p23", nama: "Zaki Ramadhan", jenisKelamin: "putra", wilayah: "Bendlay 4", tanggalLahir: "2008-09-01", noHp: "081234560123", status: "aktif", tanggalBergabung: "2023-12-18" },
   { id: "p24", nama: "Intan Permatasari", jenisKelamin: "putri", wilayah: "Bendlay 4", tanggalLahir: "2004-06-06", noHp: "081234560124", status: "aktif", tanggalBergabung: "2021-07-07" },
 ];
+
+// ---------------------------------------------------------------------------
+// Sesi pengajian dan kehadiran contoh.
+// Tanggalnya dibuat relatif terhadap hari ini, supaya halaman Absensi
+// selalu punya sesi yang sedang berlangsung dan riwayat sebelumnya.
+
+const materiContoh = [
+  "Adab menuntut ilmu",
+  "Tafsir Surat Al-Fatihah",
+  "Fiqih thaharah",
+  "Akhlak kepada orang tua",
+  "Hadits Arbain no. 1: niat",
+  "Sirah: masa kecil Rasulullah",
+  "Fiqih shalat berjamaah",
+  "Menjaga lisan",
+  "Tafsir Surat Al-Ashr",
+  "Persiapan menuju pernikahan",
+];
+
+const sasaranBergilir: Sasaran[] = ["gabungan", "remaja", "pra-nikah", "gabungan"];
+
+// Angka acak yang selalu sama untuk teks yang sama, supaya data contoh
+// tidak berubah-ubah setiap halaman dimuat ulang.
+function acakTetap(teks: string): number {
+  // Hash FNV-1a, lalu diaduk sekali lagi (fmix32) supaya teks yang hanya
+  // beda satu huruf (p01, p02) tetap menghasilkan angka yang berjauhan.
+  let h = 2166136261;
+  for (const c of teks) {
+    h ^= c.charCodeAt(0);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  return (h >>> 0) / 4294967296;
+}
+
+function jam(menitSetelah1915: number): string {
+  const total = 19 * 60 + 15 + menitSetelah1915;
+  return `${String(Math.floor(total / 60)).padStart(2, "0")}:${String(total % 60).padStart(2, "0")}`;
+}
+
+export function dataAbsensiContoh(hariIni: string): { sesi: Sesi[]; kehadiran: Kehadiran[] } {
+  // Riwayat: 4 hari pengajian terakhir (Selasa, Kamis, Sabtu) sebelum hari ini.
+  const hariPengajian: string[] = [];
+  for (let i = 1; hariPengajian.length < 4; i++) {
+    const t = geserTanggal(hariIni, -i);
+    if ([2, 4, 6].includes(hariDalamPekan(t))) hariPengajian.push(t);
+  }
+
+  const sesi: Sesi[] = [];
+  const kehadiran: Kehadiran[] = [];
+
+  const semuaTanggal = [hariIni, ...hariPengajian];
+  semuaTanggal.forEach((tanggal, i) => {
+    for (const jenisKelamin of ["putra", "putri"] as const) {
+      sesi.push({
+        id: `s-${tanggal}-${jenisKelamin}`,
+        tanggal,
+        jamMulai: "19:30",
+        jenisKelamin,
+        sasaran: sasaranBergilir[i % sasaranBergilir.length],
+        pemateri: jenisKelamin === "putra" ? (i % 2 ? "Ust. Mahmud" : "Ust. Hasan") : "Ustzh. Aminah",
+        materi: materiContoh[(i * 2 + (jenisKelamin === "putri" ? 1 : 0)) % materiContoh.length],
+        status: tanggal === hariIni ? "berlangsung" : "selesai",
+      });
+    }
+  });
+
+  for (const s of sesi) {
+    const sesiHariIni = s.tanggal === hariIni;
+    for (const p of pesertaSasaran(s, daftarPeserta)) {
+      const r = acakTetap(s.id + p.id);
+      const dasar = { sesiId: s.id, pesertaId: p.id, dicatatOleh: penggunaAktif.nama };
+
+      if (r < 0.1) {
+        kehadiran.push({ ...dasar, status: "izin", metode: "izin", keterangan: r < 0.05 ? "Sakit" : "Acara keluarga", waktu: "16:10" });
+      } else if (r < (sesiHariIni ? 0.6 : 0.85)) {
+        kehadiran.push({ ...dasar, status: "hadir", metode: r < 0.15 ? "manual" : "qr", waktu: jam(Math.floor(r * 25)) });
+      } else if (!sesiHariIni) {
+        // Sesi yang sudah ditutup: yang tidak hadir dan tidak izin tercatat alpa.
+        kehadiran.push({ ...dasar, status: "alpa", metode: "manual", waktu: "21:00" });
+      }
+      // Sesi hari ini: sisanya "belum" (belum discan), tidak ada catatan.
+    }
+  }
+
+  return { sesi, kehadiran };
+}

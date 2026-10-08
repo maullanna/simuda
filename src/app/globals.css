@@ -22,6 +22,11 @@
   --md-sys-color-outline-variant: #c2c9bc;
   --md-sys-color-warning-container: #ffdcc2;
   --md-sys-color-on-warning-container: #4a2800;
+  /* Merah hanya untuk kesalahan isian form, BUKAN untuk ketidakhadiran peserta. */
+  --md-sys-color-error: #ba1a1a;
+  --md-sys-color-on-error: #ffffff;
+  --md-sys-color-error-container: #ffdad6;
+  --md-sys-color-on-error-container: #410002;
   --md-ref-typeface-plain: var(--font-jakarta), system-ui, sans-serif;
 }
 
@@ -47,6 +52,10 @@
   --color-outline-variant: var(--md-sys-color-outline-variant);
   --color-warning-container: var(--md-sys-color-warning-container);
   --color-on-warning-container: var(--md-sys-color-on-warning-container);
+  --color-error: var(--md-sys-color-error);
+  --color-on-error: var(--md-sys-color-on-error);
+  --color-error-container: var(--md-sys-color-error-container);
+  --color-on-error-container: var(--md-sys-color-on-error-container);
   --font-sans: var(--font-jakarta), system-ui, sans-serif;
 }
 

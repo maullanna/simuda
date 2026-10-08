@@ -176,8 +176,10 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
                         {inisial(p.nama)}
                       </div>
                       <div className="min-w-0">
-                        <p className="truncate font-semibold">{p.nama}</p>
-                        <p className="text-xs text-on-surface-variant">
+                        <Link href={`/peserta/${p.id}/ubah`} className="block truncate font-semibold hover:underline">
+                          {p.nama}
+                        </Link>
+                        <p className="truncate text-xs text-on-surface-variant">
                           {labelJenisKelamin[p.jenisKelamin]}
                           <span className="md:hidden"> · {p.wilayah}</span>
                         </p>
