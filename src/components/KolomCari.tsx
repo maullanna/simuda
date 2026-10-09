@@ -27,6 +27,7 @@ export function KolomCari({ label, nilaiAwal }: { label: string; nilaiAwal: stri
         const kataKunci = kolom!.value.trim();
         if (kataKunci) params.set("q", kataKunci);
         else params.delete("q");
+        params.delete("halaman"); // hasil pencarian baru selalu dimulai dari halaman 1
         const query = params.toString();
         router.replace(query ? `${pathname}?${query}` : pathname, { scroll: false });
       }, 300);

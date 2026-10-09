@@ -1,8 +1,12 @@
 @import "tailwindcss";
 
+/* Varian gelap: class seperti gelap:hidden hanya berlaku saat <html data-tema="gelap">. */
+@custom-variant gelap (&:where([data-tema="gelap"], [data-tema="gelap"] *));
+
 /* Token warna Material 3, seed hijau #2E6B30.
    Nama variabel --md-sys-* ini juga dibaca otomatis oleh @material/web nanti. */
 :root {
+  color-scheme: light;
   --md-sys-color-primary: #2e6b30;
   --md-sys-color-on-primary: #ffffff;
   --md-sys-color-primary-container: #b7f0ae;
@@ -27,7 +31,47 @@
   --md-sys-color-on-error: #ffffff;
   --md-sys-color-error-container: #ffdad6;
   --md-sys-color-on-error-container: #410002;
+  /* Lapisan gelap di belakang laci menu / dialog. */
+  --md-sys-color-scrim: #000000;
+  /* Warna grafik. Pasangan ini sudah dicek aman untuk buta warna (validator dataviz). */
+  --grafik-1: #2e6b30;
+  --grafik-2: #7a5ea8;
+  --grafik-3: #b0781a; /* kuning tua, dipakai untuk "alpa" (sengaja bukan merah) */
   --md-ref-typeface-plain: var(--font-jakarta), system-ui, sans-serif;
+}
+
+/* Mode gelap: hitam kehijauan dengan aksen hijau limau.
+   Nama tokennya sama persis, hanya nilainya yang berganti, jadi semua komponen
+   (termasuk tombol @material/web) otomatis ikut gelap tanpa diubah satu per satu. */
+:root[data-tema="gelap"] {
+  color-scheme: dark;
+  --md-sys-color-primary: #9fdc6f;
+  --md-sys-color-on-primary: #10380a;
+  --md-sys-color-primary-container: #2a4a1c;
+  --md-sys-color-on-primary-container: #c6f5a6;
+  --md-sys-color-secondary-container: #2e3a29;
+  --md-sys-color-on-secondary-container: #d5e8c8;
+  --md-sys-color-tertiary-container: #1f3d52;
+  --md-sys-color-on-tertiary-container: #cbe6ff;
+  --md-sys-color-surface: #0f140e;
+  --md-sys-color-surface-container-low: #161c15;
+  --md-sys-color-surface-container: #1b2219;
+  --md-sys-color-surface-container-high: #232b21;
+  --md-sys-color-surface-container-highest: #2c3529;
+  --md-sys-color-on-surface: #e0e5d9;
+  --md-sys-color-on-surface-variant: #b9c2b2;
+  --md-sys-color-outline: #8a9384;
+  --md-sys-color-outline-variant: #3d463a;
+  --md-sys-color-warning-container: #5a3a10;
+  --md-sys-color-on-warning-container: #ffdcbe;
+  --md-sys-color-error: #ffb4ab;
+  --md-sys-color-on-error: #690005;
+  --md-sys-color-error-container: #93000a;
+  --md-sys-color-on-error-container: #ffdad6;
+  /* Pasangan grafik versi gelap, juga sudah dicek validator dataviz. */
+  --grafik-1: #64a443;
+  --grafik-2: #9a80d8;
+  --grafik-3: #b5862f;
 }
 
 /* Menghubungkan token di atas ke class Tailwind,
@@ -56,6 +100,10 @@
   --color-on-error: var(--md-sys-color-on-error);
   --color-error-container: var(--md-sys-color-error-container);
   --color-on-error-container: var(--md-sys-color-on-error-container);
+  --color-scrim: var(--md-sys-color-scrim);
+  --color-grafik-1: var(--grafik-1);
+  --color-grafik-2: var(--grafik-2);
+  --color-grafik-3: var(--grafik-3);
   --font-sans: var(--font-jakarta), system-ui, sans-serif;
 }
 
@@ -64,6 +112,60 @@ body {
   color: var(--md-sys-color-on-surface);
   font-family: var(--font-sans);
 }
+/* ---------------------------------------------------------------------------
+   Gerak (motion)
+   Kotak/kartu sengaja tidak bergerak saat hover. Yang bergerak hanya isinya
+   (ikon, hiasan) dengan kurva "pegas": cubic-bezier(0.34, 1.56, 0.64, 1). */
+
+/* Pergantian tema: halaman baru terbuka melingkar dari tombol tema
+   (diatur dari TombolTema.tsx lewat View Transitions API). */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation: none;
+  mix-blend-mode: normal;
+}
+
+/* Muncul dari bawah saat halaman dibuka. Pakai style animationDelay untuk berurutan. */
+@keyframes muncul {
+  from {
+    opacity: 0;
+    transform: translateY(16px);
+  }
+}
+
+@utility muncul {
+  animation: muncul 600ms cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+/* Hormati pengaturan HP/laptop yang meminta gerak dikurangi. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
+
+/* Layar scanner: garis pindai yang naik-turun di dalam bingkai kamera. */
+@keyframes garis-pindai {
+  0%,
+  100% {
+    top: 10%;
+  }
+  50% {
+    top: 88%;
+  }
+}
+
+/* Muncul sambil membesar dengan pantulan pegas (sapaan "Selamat datang"). */
+@keyframes letup {
+  from {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+}
+
 /* Padding tombol md-*. JANGAN DIHAPUS.
    Preflight Tailwind memberi padding: 0 ke semua elemen, termasuk <md-...>.
    Padding asli tombol Material ada di :host (di dalam shadow DOM) dan kalah
@@ -84,3 +186,4 @@ body {
   padding-inline-start: var(--_with-trailing-icon-leading-space);
   padding-inline-end: var(--_with-trailing-icon-trailing-space);
 }
+

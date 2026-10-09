@@ -1,36 +1,45 @@
 import type { Metadata } from "next";
 import { connection } from "next/server";
 import { Clock, ScanLine, User } from "lucide-react";
+import { ChipJenisKelamin } from "@/components/ChipJenisKelamin";
+import { Paginasi } from "@/components/Paginasi";
+import { potongHalaman } from "@/lib/halaman";
+import { TombolCatatIzin, TombolInputManual, TombolTutupSesi } from "@/components/absensi/AksiAbsensi";
+import type { OpsiSesiIzin } from "@/components/absensi/FormCatatIzin";
 import { daftarPeserta, dataAbsensiContoh } from "@/lib/mock";
+import { bacaPeriode } from "@/lib/periode";
 import { labelJenisKelamin, tanggalHariIniWib } from "@/lib/peserta";
-import { formatTanggal, labelSasaran, ringkasKehadiran, type Sesi } from "@/lib/sesi";
+import {
+  daftarPesertaSesi,
+  formatTanggal,
+  geserTanggal,
+  labelSasaran,
+  ringkasKehadiran,
+  type PesertaSesi,
+  type Sesi,
+} from "@/lib/sesi";
 
 export const metadata: Metadata = {
   title: "Absensi · SIMUDA",
 };
 
-function ChipJenisKelamin({ sesi }: { sesi: Sesi }) {
-  return (
-    <span
-      className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-bold ${
-        sesi.jenisKelamin === "putra"
-          ? "bg-primary-container text-on-primary-container"
-          : "bg-tertiary-container text-on-tertiary-container"
-      }`}
-    >
-      {labelJenisKelamin[sesi.jenisKelamin]}
-    </span>
-  );
-}
-
-function KartuSesiHariIni({ sesi, ringkasan }: { sesi: Sesi; ringkasan: ReturnType<typeof ringkasKehadiran> }) {
+function KartuSesiHariIni({
+  sesi,
+  ringkasan,
+  peserta,
+}: {
+  sesi: Sesi;
+  ringkasan: ReturnType<typeof ringkasKehadiran>;
+  peserta: PesertaSesi[];
+}) {
+  const judulSesi = `${labelJenisKelamin[sesi.jenisKelamin]} · ${sesi.materi}`;
   const persenHadir = ringkasan.sasaran ? (ringkasan.hadir / ringkasan.sasaran) * 100 : 0;
   const persenIzin = ringkasan.sasaran ? (ringkasan.izin / ringkasan.sasaran) * 100 : 0;
 
   return (
     <article className="flex flex-col gap-5 rounded-3xl bg-surface-low p-6">
       <div className="flex flex-wrap items-center gap-2">
-        <ChipJenisKelamin sesi={sesi} />
+        <ChipJenisKelamin jenisKelamin={sesi.jenisKelamin} />
         <span className="inline-flex rounded-lg bg-surface-highest px-2.5 py-1 text-xs font-bold text-on-surface-variant">
           {labelSasaran[sesi.sasaran]}
         </span>
@@ -80,24 +89,28 @@ function KartuSesiHariIni({ sesi, ringkasan }: { sesi: Sesi; ringkasan: ReturnTy
           <ScanLine slot="icon" size={18} />
           Buka scanner
         </md-filled-button>
-        {/* Input manual dan tutup sesi dikerjakan di langkah A.3 */}
-        <md-outlined-button disabled>Input manual</md-outlined-button>
-        <md-text-button disabled>Tutup sesi</md-text-button>
+        <TombolInputManual judulSesi={judulSesi} peserta={peserta} />
+        <TombolTutupSesi judulSesi={judulSesi} peserta={peserta} />
       </div>
     </article>
   );
 }
 
-export default async function AbsensiPage() {
+export default async function AbsensiPage(props: PageProps<"/absensi">) {
   // Halaman ini bergantung pada tanggal hari ini, jadi dibuat saat dibuka, bukan saat build.
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
 
+  // Riwayat mengikuti filter tanggal di navbar (?dari=...&sampai=...), bawaannya bulan ini.
+  const sp = await props.searchParams;
+  const periode = bacaPeriode(sp.dari, sp.sampai, hariIni);
+
   const sesiHariIni = sesi.filter((s) => s.tanggal === hariIni);
   const riwayat = sesi
-    .filter((s) => s.status === "selesai")
+    .filter((s) => s.status === "selesai" && s.tanggal >= periode.dari && s.tanggal <= periode.sampai)
     .sort((a, b) => b.tanggal.localeCompare(a.tanggal) || a.jenisKelamin.localeCompare(b.jenisKelamin));
+  const tabelRiwayat = potongHalaman(riwayat, sp.halaman, sp.per);
 
   const idSesiHariIni = new Set(sesiHariIni.map((s) => s.id));
   const izinHariIni = kehadiran
@@ -109,10 +122,23 @@ export default async function AbsensiPage() {
     }))
     .sort((a, b) => a.peserta.nama.localeCompare(b.peserta.nama, "id"));
 
+  // Pilihan sesi untuk Catat izin: hari ini dan 7 hari ke depan (izin diajukan sebelum pengajian).
+  const batasIzin = geserTanggal(hariIni, 7);
+  const opsiIzin: OpsiSesiIzin[] = sesi
+    .filter((s) => s.status !== "selesai" && s.status !== "batal" && s.tanggal >= hariIni && s.tanggal <= batasIzin)
+    .sort((a, b) => a.tanggal.localeCompare(b.tanggal) || a.jenisKelamin.localeCompare(b.jenisKelamin))
+    .map((s) => ({
+      id: s.id,
+      label: `${s.tanggal === hariIni ? "Hari ini" : formatTanggal(s.tanggal, { weekday: "short", day: "numeric", month: "short" })} · ${labelJenisKelamin[s.jenisKelamin]}`,
+      keterangan: `${labelSasaran[s.sasaran]} · ${s.jamMulai}`,
+      peserta: daftarPesertaSesi(s, daftarPeserta, kehadiran).filter((p) => !p.diLuarSasaran),
+    }));
+
   return (
     <div className="flex flex-col gap-8">
       <header>
-        <h1 className="text-2xl font-extrabold lg:text-3xl">Absensi</h1>
+        {/* Judul sudah tampil di navbar; h1 tetap ada untuk pembaca layar */}
+        <h1 className="sr-only">Absensi</h1>
         <p className="text-on-surface-variant">{formatTanggal(hariIni)}</p>
       </header>
 
@@ -126,7 +152,12 @@ export default async function AbsensiPage() {
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
             {sesiHariIni.map((s) => (
-              <KartuSesiHariIni key={s.id} sesi={s} ringkasan={ringkasKehadiran(s, daftarPeserta, kehadiran)} />
+              <KartuSesiHariIni
+                key={s.id}
+                sesi={s}
+                ringkasan={ringkasKehadiran(s, daftarPeserta, kehadiran)}
+                peserta={daftarPesertaSesi(s, daftarPeserta, kehadiran)}
+              />
             ))}
           </div>
         )}
@@ -136,8 +167,7 @@ export default async function AbsensiPage() {
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
           <h2 className="text-lg font-extrabold">Izin hari ini</h2>
-          {/* Catat izin dikerjakan di langkah A.3 */}
-          <md-outlined-button disabled>Catat izin</md-outlined-button>
+          <TombolCatatIzin opsiSesi={opsiIzin} />
         </div>
         <div className="overflow-hidden rounded-3xl bg-surface-low">
           {izinHariIni.length === 0 ? (
@@ -155,7 +185,7 @@ export default async function AbsensiPage() {
                       {k.keterangan} · dicatat {k.dicatatOleh}, {k.waktu}
                     </p>
                   </div>
-                  <ChipJenisKelamin sesi={k.sesi} />
+                  <ChipJenisKelamin jenisKelamin={k.sesi.jenisKelamin} />
                 </li>
               ))}
             </ul>
@@ -165,8 +195,10 @@ export default async function AbsensiPage() {
 
       {/* Riwayat sesi */}
       <section className="flex flex-col gap-3">
-        <h2 className="text-lg font-extrabold">Riwayat sesi</h2>
-        <div className="overflow-hidden rounded-3xl bg-surface-low">
+        <h2 className="text-lg font-extrabold">
+          Riwayat sesi <span className="font-semibold text-on-surface-variant">· {periode.label}</span>
+        </h2>
+        <div className="overflow-hidden rounded-3xl bg-surface-low pb-1">
           <table className="w-full text-left text-sm">
             <thead className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">
               <tr>
@@ -179,7 +211,14 @@ export default async function AbsensiPage() {
               </tr>
             </thead>
             <tbody>
-              {riwayat.map((s) => {
+              {riwayat.length === 0 && (
+                <tr className="border-t border-outline-variant/60">
+                  <td colSpan={6} className="px-6 py-10 text-center text-on-surface-variant">
+                    Tidak ada sesi selesai di periode ini.
+                  </td>
+                </tr>
+              )}
+              {tabelRiwayat.isi.map((s) => {
                 const r = ringkasKehadiran(s, daftarPeserta, kehadiran);
                 return (
                   <tr key={s.id} className="border-t border-outline-variant/60 transition-colors hover:bg-surface-mid">
@@ -188,7 +227,7 @@ export default async function AbsensiPage() {
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1.5">
-                        <ChipJenisKelamin sesi={s} />
+                        <ChipJenisKelamin jenisKelamin={s.jenisKelamin} />
                         <span className="text-xs text-on-surface-variant">{labelSasaran[s.sasaran]}</span>
                       </div>
                     </td>
@@ -207,6 +246,9 @@ export default async function AbsensiPage() {
               })}
             </tbody>
           </table>
+          <div className="px-4 pb-2 lg:px-6">
+            <Paginasi total={tabelRiwayat.total} halaman={tabelRiwayat.halaman} per={tabelRiwayat.per} label="sesi" />
+          </div>
         </div>
       </section>
     </div>

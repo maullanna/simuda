@@ -2,6 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { FilterChip } from "@/components/FilterChip";
 import { KolomCari } from "@/components/KolomCari";
+import { Paginasi } from "@/components/Paginasi";
+import { potongHalaman } from "@/lib/halaman";
 import { daftarPeserta } from "@/lib/mock";
 import {
   hitungUmur,
@@ -16,12 +18,15 @@ export const metadata: Metadata = {
 };
 
 // Semua filter disimpan di URL, misalnya /peserta?kategori=remaja&jk=putri&q=siti
+// `per` (jumlah baris) ikut dibawa saat filter diganti, sedangkan nomor halaman sengaja
+// tidak dibawa supaya tabel kembali ke halaman 1.
 type Filter = {
   kategori?: string;
   jk?: string;
   wilayah?: string;
   status?: string;
   q?: string;
+  per?: string;
 };
 
 // Membuat URL baru dari filter yang sedang aktif, dengan satu filter diubah.
@@ -57,6 +62,7 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
     wilayah: ambilTeks(sp.wilayah),
     status: ambilTeks(sp.status),
     q: ambilTeks(sp.q),
+    per: ambilTeks(sp.per),
   };
 
   // Kategori dihitung sekali per peserta, lalu dipakai untuk menyaring dan menampilkan.
@@ -82,6 +88,7 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
     .filter((p) => !filter.wilayah || p.wilayah === `Bendlay ${filter.wilayah}`)
     .filter((p) => !kataKunci || p.nama.toLowerCase().includes(kataKunci))
     .sort((a, b) => a.nama.localeCompare(b.nama, "id"));
+  const tabel = potongHalaman(hasil, sp.halaman, sp.per);
 
   const tab: { label: string; nilai: Kategori | undefined; jumlah: number }[] = [
     { label: "Semua", nilai: undefined, jumlah: jumlahPerTab.semua },
@@ -93,15 +100,16 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold lg:text-3xl">Peserta</h1>
+          {/* Judul sudah tampil di navbar; h1 tetap ada untuk pembaca layar */}
+          <h1 className="sr-only">Peserta</h1>
           <p className="text-on-surface-variant">
             {jumlahPerTab.semua} peserta {statusDicari === "aktif" ? "aktif" : "tidak aktif"}
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {/* Impor Excel dan cetak kartu dikerjakan di langkah tersendiri */}
+          {/* Impor Excel dikerjakan di langkah tersendiri */}
           <md-outlined-button disabled>Impor Excel</md-outlined-button>
-          <md-filled-tonal-button disabled>Cetak kartu</md-filled-tonal-button>
+          <md-filled-tonal-button href="/peserta/kartu">Cetak kartu</md-filled-tonal-button>
           <md-filled-button href="/peserta/tambah">Tambah peserta</md-filled-button>
         </div>
       </header>
@@ -145,7 +153,7 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
       </div>
 
       {/* Tabel peserta */}
-      <div className="overflow-hidden rounded-3xl bg-surface-low">
+      <div className="overflow-hidden rounded-3xl bg-surface-low pb-1">
         {hasil.length === 0 ? (
           <p className="px-6 py-12 text-center text-on-surface-variant">
             Tidak ada peserta yang cocok dengan filter ini.
@@ -154,7 +162,8 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
           <table className="w-full text-left text-sm">
             <thead className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">
               <tr>
-                <th className="px-4 py-3 lg:px-6">Nama</th>
+                <th className="w-12 py-3 pl-4 lg:pl-6">No</th>
+                <th className="px-4 py-3">Nama</th>
                 <th className="hidden px-4 py-3 md:table-cell">Wilayah</th>
                 <th className="px-4 py-3">Kategori</th>
                 <th className="hidden px-4 py-3 sm:table-cell">Umur</th>
@@ -162,9 +171,10 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
               </tr>
             </thead>
             <tbody>
-              {hasil.map((p) => (
+              {tabel.isi.map((p, i) => (
                 <tr key={p.id} className="border-t border-outline-variant/60 transition-colors hover:bg-surface-mid">
-                  <td className="px-4 py-3 lg:px-6">
+                  <td className="py-3 pl-4 text-on-surface-variant lg:pl-6">{tabel.nomorAwal + i}</td>
+                  <td className="px-4 py-3">
                     <div className="flex items-center gap-3">
                       <div
                         className={`grid size-10 shrink-0 place-items-center rounded-full text-xs font-bold ${
@@ -205,6 +215,9 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
             </tbody>
           </table>
         )}
+        <div className="px-4 pb-2 lg:px-6">
+          <Paginasi total={tabel.total} halaman={tabel.halaman} per={tabel.per} label="peserta" />
+        </div>
       </div>
     </div>
   );

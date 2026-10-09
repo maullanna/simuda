@@ -7,6 +7,7 @@ type MdElementProps<P> = DetailedHTMLProps<HTMLAttributes<HTMLElement>, HTMLElem
 type MdButtonProps = MdElementProps<{
   disabled?: boolean;
   href?: string;
+  download?: string;
   target?: string;
   type?: "button" | "submit" | "reset";
   "has-icon"?: boolean;
@@ -20,12 +21,16 @@ type MdTextFieldProps = MdElementProps<{
   type?: string;
   placeholder?: string;
   max?: string;
+  min?: string;
+  rows?: number;
+  maxlength?: number;
   autocomplete?: string;
   required?: boolean;
   disabled?: boolean;
   error?: boolean;
   "error-text"?: string;
   "supporting-text"?: string;
+  "prefix-text"?: string;
 }>;
 
 declare module "react" {
