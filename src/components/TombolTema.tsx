@@ -9,8 +9,8 @@ const pegas = "duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]";
 // atau memperpendek gerakan pelan di tengah.
 const DURASI = {
   membuka: 450, // lingkaran membuka cepat dari tombol
-  lambat: 2000, // bergerak sangat pelan di tengah
-  melanjutkan: 650, // lanjut cepat sampai menutupi layar
+  lambat: 900, // bergerak sangat pelan di tengah
+  melanjutkan: 350, // lanjut cepat sampai menutupi layar
 };
 
 // Tombol ganti mode terang/gelap.
@@ -55,7 +55,8 @@ export function TombolTema({ className = "", denganLabel }: { className?: string
           {
             clipPath: lingkaran(jariJari * 0.45),
             offset: (DURASI.membuka + DURASI.lambat) / total,
-            easing: "cubic-bezier(0.4, 0, 0.2, 1)",
+            // Fase akhir langsung melesat sejak awal, lalu mendarat halus.
+            easing: "cubic-bezier(0.2, 0, 0, 1)",
           },
           { clipPath: lingkaran(jariJari), offset: 1 },
         ],
