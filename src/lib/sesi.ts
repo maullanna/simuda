@@ -2,7 +2,7 @@
 
 import { kategoriPeserta, type JenisKelamin, type Peserta } from "./peserta";
 
-export type Sasaran = "remaja" | "pra-nikah" | "gabungan";
+export type Sasaran = "pra-remaja" | "remaja" | "pra-nikah" | "gabungan";
 export type StatusSesi = "terjadwal" | "berlangsung" | "selesai" | "batal";
 export type StatusKehadiran = "hadir" | "izin" | "alpa";
 export type MetodeKehadiran = "qr" | "manual" | "izin";
@@ -46,6 +46,7 @@ export type Kehadiran = {
 };
 
 export const labelSasaran: Record<Sasaran, string> = {
+  "pra-remaja": "Pra-remaja",
   remaja: "Remaja",
   "pra-nikah": "Pra-nikah",
   gabungan: "Gabungan",
@@ -151,7 +152,7 @@ export function periksaIsianSesi(isian: IsianSesi, hariIni: string, baru: boolea
 
   if (!/^\d{2}:\d{2}$/.test(isian.jamMulai)) galat.jamMulai = "Isi jam mulai";
 
-  if (!["remaja", "pra-nikah", "gabungan"].includes(isian.sasaran)) galat.sasaran = "Pilih sasaran";
+  if (!["pra-remaja", "remaja", "pra-nikah", "gabungan"].includes(isian.sasaran)) galat.sasaran = "Pilih sasaran";
 
   const materi = isian.materi.trim();
   if (!baru && materi === "") galat.materi = "Isi judul materi";

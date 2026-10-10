@@ -2,7 +2,8 @@
 export type JenisKelamin = "putra" | "putri";
 export type Wilayah = "Bendlay 2" | "Bendlay 4";
 export type StatusPeserta = "aktif" | "tidak_aktif";
-export type Kategori = "remaja" | "pra-nikah";
+export type Kategori = "pra-remaja" | "remaja" | "pra-nikah";
+export const DAFTAR_KATEGORI: Kategori[] = ["pra-remaja", "remaja", "pra-nikah"];
 
 export type Peserta = {
   id: string;
@@ -31,11 +32,14 @@ export function hitungUmur(tanggalLahir: string, sekarang = new Date()): number 
 }
 
 
+// Pra-remaja sampai 15 tahun, remaja 16–18 tahun, pra-nikah 19 tahun ke atas (KONSEP bagian 2).
 export function kategoriPeserta(tanggalLahir: string, sekarang = new Date()): Kategori {
-  return hitungUmur(tanggalLahir, sekarang) <= 18 ? "remaja" : "pra-nikah";
+  const umur = hitungUmur(tanggalLahir, sekarang);
+  return umur <= 15 ? "pra-remaja" : umur <= 18 ? "remaja" : "pra-nikah";
 }
 
 export const labelKategori: Record<Kategori, string> = {
+  "pra-remaja": "Pra-remaja",
   remaja: "Remaja",
   "pra-nikah": "Pra-nikah",
 };

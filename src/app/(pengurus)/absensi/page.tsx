@@ -10,6 +10,7 @@ import type { OpsiSesiIzin } from "@/components/absensi/FormCatatIzin";
 import { daftarPeserta, dataAbsensiContoh } from "@/lib/mock";
 import { bacaPeriode } from "@/lib/periode";
 import { labelJenisKelamin, tanggalHariIniWib } from "@/lib/peserta";
+import { requireRole } from "@/lib/pengguna";
 import {
   daftarPesertaSesi,
   formatTanggal,
@@ -102,6 +103,7 @@ function KartuSesiHariIni({
 
 export default async function AbsensiPage(props: PageProps<"/absensi">) {
   // Halaman ini bergantung pada tanggal hari ini, jadi dibuat saat dibuka, bukan saat build.
+  await requireRole("daftarHadir", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi, kehadiran } = dataAbsensiContoh(hariIni);

@@ -109,6 +109,7 @@ export function FormSesi({
         nilaiAwal={sesi?.sasaran ?? "gabungan"}
         error={galat.sasaran}
         pilihan={[
+          { nilai: "pra-remaja", label: "Pra-remaja" },
           { nilai: "remaja", label: "Remaja" },
           { nilai: "pra-nikah", label: "Pra-nikah" },
           { nilai: "gabungan", label: "Gabungan" },

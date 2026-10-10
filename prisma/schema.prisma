@@ -36,6 +36,7 @@ enum StatusPeserta {
 }
 
 enum Sasaran {
+  pra_remaja
   remaja
   pra_nikah
   gabungan
@@ -66,6 +67,7 @@ enum TipeLampiran {
 }
 
 enum Peran {
+  admin // Administrator: mengelola seluruh aplikasi
   kyai
   wakil
   ketua

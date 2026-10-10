@@ -9,6 +9,7 @@ import { FilterChip } from "@/components/FilterChip";
 import { daftarPeserta, dataAbsensiContoh } from "@/lib/mock";
 import { tanggalHariIniWib } from "@/lib/peserta";
 import { daftarPesertaSesi, formatTanggal, labelSasaran, type PesertaSesi } from "@/lib/sesi";
+import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Detail sesi · SIMUDA",
@@ -26,6 +27,7 @@ const labelStatusSesi = { terjadwal: "Terjadwal", berlangsung: "Berlangsung", se
 
 // Detail satu sesi: siapa saja yang hadir, izin, alpa, atau belum tercatat.
 export default async function DetailSesiPage(props: PageProps<"/absensi/[id]">) {
+  await requireRole("daftarHadir", "lihat");
   await connection();
   const { id } = await props.params;
   const sp = await props.searchParams;

@@ -7,6 +7,7 @@ import { daftarPengurus, dataMusyawarahContoh } from "@/lib/mock";
 import { lewatTenggat } from "@/lib/musyawarah";
 import { tanggalHariIniWib } from "@/lib/peserta";
 import { formatTanggal } from "@/lib/sesi";
+import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Musyawarah · SIMUDA",
@@ -18,6 +19,7 @@ function selisihHari(dari: string, ke: string): number {
 
 // Musyawarah (KONSEP 5.9): jadwal, agenda, hasil, dan tindak lanjut supaya keputusan tidak berhenti di rapat.
 export default async function MusyawarahPage() {
+  await requireRole("musyawarah", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
   const { musyawarah, tindakLanjut } = dataMusyawarahContoh(hariIni);

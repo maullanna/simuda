@@ -3,7 +3,18 @@ import { ArrowLeft } from "lucide-react";
 import { TombolTema } from "@/components/TombolTema";
 
 // Kerangka halaman masuk: kartu di tengah layar dengan logo, judul, dan tombol kembali.
-export function KerangkaMasuk({ judul, keterangan, children }: { judul: string; keterangan: string; children: React.ReactNode }) {
+// Dipakai juga oleh halaman Akun saya, dengan tombol kembali ke Beranda/Scanner.
+export function KerangkaMasuk({
+  judul,
+  keterangan,
+  kembali = { href: "/", label: "Kembali ke halaman depan" },
+  children,
+}: {
+  judul: string;
+  keterangan: string;
+  kembali?: { href: string; label: string };
+  children: React.ReactNode;
+}) {
   return (
     <main className="relative isolate mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 py-6">
       <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 overflow-hidden">
@@ -11,7 +22,7 @@ export function KerangkaMasuk({ judul, keterangan, children }: { judul: string; 
         <div className="absolute -bottom-16 -left-16 size-48 rounded-full bg-tertiary-container/50" />
       </div>
       <header className="flex items-center justify-between">
-        <Link href="/" aria-label="Kembali ke halaman depan" className="grid size-10 place-items-center rounded-full text-on-surface-variant hover:bg-surface-high">
+        <Link href={kembali.href} aria-label={kembali.label} className="grid size-10 place-items-center rounded-full text-on-surface-variant hover:bg-surface-high">
           <ArrowLeft size={20} />
         </Link>
         <TombolTema className="grid size-10 place-items-center rounded-full text-on-surface-variant hover:bg-surface-high" />

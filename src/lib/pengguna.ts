@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import type { Peran } from "@/generated/prisma/enums";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/db";
+import { boleh, type Aksi, type Fitur } from "@/lib/hak-akses";
 
 export type PenggunaMasuk = {
   userId: string;
@@ -42,16 +43,17 @@ export const ambilPenggunaMasuk = cache(async (): Promise<PenggunaMasuk | null> 
   };
 });
 
-// Semua peran pengurus kecuali petugas scan (petugas scan hanya boleh membuka layar Scanner).
-export const PERAN_PENGURUS: Peran[] = ["kyai", "wakil", "ketua", "sekretaris", "bendahara", "pengurus"];
+// Halaman pertama setelah masuk: petugas scan langsung ke Scanner, yang lain ke Beranda.
+export function halamanAwal(peran: Peran): string {
+  return peran === "petugas_scan" ? "/scan" : "/dashboard";
+}
 
-// Untuk halaman: belum masuk -> ke /masuk; peran tidak sesuai -> ke halaman yang boleh dibuka.
-// Untuk Server Action nanti: dipanggil di baris pertama aksi, sebelum menyentuh database.
-export async function requireRole(peranBoleh: Peran[] = PERAN_PENGURUS): Promise<PenggunaMasuk> {
+// Pemeriksaan akses per fitur dan tindakan (tabel di lib/hak-akses.ts = KONSEP 3.2).
+// Untuk halaman: belum masuk -> ke /masuk; tidak berhak -> ke halaman awalnya.
+// Untuk Server Action: dipanggil di baris pertama aksi, sebelum menyentuh database.
+export async function requireRole(fitur: Fitur, aksi: Aksi): Promise<PenggunaMasuk> {
   const pengguna = await ambilPenggunaMasuk();
   if (!pengguna) redirect("/masuk");
-  if (!peranBoleh.includes(pengguna.peran)) {
-    redirect(pengguna.peran === "petugas_scan" ? "/scan" : "/dashboard");
-  }
+  if (!boleh(pengguna.peran, fitur, aksi)) redirect(halamanAwal(pengguna.peran));
   return pengguna;
 }

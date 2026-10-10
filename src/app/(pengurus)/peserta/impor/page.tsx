@@ -5,6 +5,7 @@ import { ArrowLeft } from "lucide-react";
 import { ImporPeserta } from "@/components/peserta/ImporPeserta";
 import { daftarPeserta } from "@/lib/mock";
 import { tanggalHariIniWib } from "@/lib/peserta";
+import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Impor peserta · SIMUDA",
@@ -13,6 +14,7 @@ export const metadata: Metadata = {
 // Impor data awal peserta dari Excel (KONSEP 5.1).
 export default async function ImporPesertaPage() {
   // Butuh tanggal hari ini untuk memeriksa tanggal lahir, jadi dibuat saat dibuka.
+  await requireRole("imporPeserta", "jalankan");
   await connection();
 
   return (

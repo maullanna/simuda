@@ -4,7 +4,9 @@ import { FilterChip } from "@/components/FilterChip";
 import { KolomCari } from "@/components/KolomCari";
 import { Paginasi } from "@/components/Paginasi";
 import { potongHalaman } from "@/lib/halaman";
-import { daftarPeserta } from "@/lib/mock";
+import { ambilSemuaPeserta } from "@/lib/data/peserta";
+import { boleh } from "@/lib/hak-akses";
+import { requireRole } from "@/lib/pengguna";
 import {
   hitungUmur,
   kategoriPeserta,
@@ -55,6 +57,13 @@ function inisial(nama: string): string {
 }
 
 export default async function PesertaPage(props: PageProps<"/peserta">) {
+  // Semua pengurus boleh melihat; hanya Wakil, Ketua, Sekretaris yang boleh mengelola (KONSEP bagian 3).
+  const pengguna = await requireRole("peserta", "lihat");
+  const bolehKelola = boleh(pengguna.peran, "peserta", "ubah");
+  const bolehTambah = boleh(pengguna.peran, "peserta", "tambah");
+  const bolehImpor = boleh(pengguna.peran, "imporPeserta", "jalankan");
+  const bolehKartu = boleh(pengguna.peran, "kartu", "tambah");
+  const daftarPeserta = await ambilSemuaPeserta();
   const sp = await props.searchParams;
   const filter: Filter = {
     kategori: ambilTeks(sp.kategori),
@@ -77,6 +86,7 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
 
   const jumlahPerTab: Record<"semua" | Kategori, number> = {
     semua: sesuaiStatus.length,
+    "pra-remaja": sesuaiStatus.filter((p) => p.kategori === "pra-remaja").length,
     remaja: sesuaiStatus.filter((p) => p.kategori === "remaja").length,
     "pra-nikah": sesuaiStatus.filter((p) => p.kategori === "pra-nikah").length,
   };
@@ -92,6 +102,7 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
 
   const tab: { label: string; nilai: Kategori | undefined; jumlah: number }[] = [
     { label: "Semua", nilai: undefined, jumlah: jumlahPerTab.semua },
+    { label: "Pra-remaja", nilai: "pra-remaja", jumlah: jumlahPerTab["pra-remaja"] },
     { label: "Remaja", nilai: "remaja", jumlah: jumlahPerTab.remaja },
     { label: "Pra-nikah", nilai: "pra-nikah", jumlah: jumlahPerTab["pra-nikah"] },
   ];
@@ -106,11 +117,14 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
             {jumlahPerTab.semua} peserta {statusDicari === "aktif" ? "aktif" : "tidak aktif"}
           </p>
         </div>
-        <div className="flex flex-wrap gap-2">
-          <md-outlined-button href="/peserta/impor">Impor Excel</md-outlined-button>
-          <md-filled-tonal-button href="/peserta/kartu">Cetak kartu</md-filled-tonal-button>
-          <md-filled-button href="/peserta/tambah">Tambah peserta</md-filled-button>
-        </div>
+        {/* Tombol kelola hanya untuk peran yang boleh; server tetap memeriksa ulang lewat requireRole */}
+        {(bolehImpor || bolehKartu || bolehTambah) && (
+          <div className="flex flex-wrap gap-2">
+            {bolehImpor && <md-outlined-button href="/peserta/impor">Impor Excel</md-outlined-button>}
+            {bolehKartu && <md-filled-tonal-button href="/peserta/kartu">Cetak kartu</md-filled-tonal-button>}
+            {bolehTambah && <md-filled-button href="/peserta/tambah">Tambah peserta</md-filled-button>}
+          </div>
+        )}
       </header>
 
       {/* Tab kategori */}
@@ -185,9 +199,13 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
                         {inisial(p.nama)}
                       </div>
                       <div className="min-w-0">
-                        <Link href={`/peserta/${p.id}/ubah`} className="block truncate font-semibold hover:underline">
-                          {p.nama}
-                        </Link>
+                        {bolehKelola ? (
+                          <Link href={`/peserta/${p.id}/ubah`} className="block truncate font-semibold hover:underline">
+                            {p.nama}
+                          </Link>
+                        ) : (
+                          <p className="truncate font-semibold">{p.nama}</p>
+                        )}
                         <p className="truncate text-xs text-on-surface-variant">
                           {labelJenisKelamin[p.jenisKelamin]}
                           <span className="md:hidden"> · {p.wilayah}</span>
@@ -199,9 +217,11 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
                   <td className="px-4 py-3">
                     <span
                       className={`inline-flex rounded-lg px-2.5 py-1 text-xs font-bold ${
-                        p.kategori === "remaja"
-                          ? "bg-secondary-container text-on-secondary-container"
-                          : "bg-surface-highest text-on-surface-variant"
+                        p.kategori === "pra-remaja"
+                          ? "bg-tertiary-container text-on-tertiary-container"
+                          : p.kategori === "remaja"
+                            ? "bg-secondary-container text-on-secondary-container"
+                            : "bg-surface-highest text-on-surface-variant"
                       }`}
                     >
                       {labelKategori[p.kategori]}

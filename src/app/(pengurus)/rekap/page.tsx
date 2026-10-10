@@ -13,9 +13,10 @@ import type { DataEksporRekap } from "@/lib/ekspor-rekap";
 import { daftarPeserta, dataAbsensiContoh } from "@/lib/mock";
 import { potongHalaman } from "@/lib/halaman";
 import { bacaPeriode } from "@/lib/periode";
-import { kategoriPeserta, labelJenisKelamin, labelKategori, tanggalHariIniWib, type Kategori } from "@/lib/peserta";
+import { DAFTAR_KATEGORI, kategoriPeserta, labelJenisKelamin, labelKategori, tanggalHariIniWib, type Kategori } from "@/lib/peserta";
 import { daftarPerluDihubungi, hitungRekap, nomorWhatsApp } from "@/lib/rekap";
 import { formatTanggal, labelSasaran } from "@/lib/sesi";
+import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Rekap · SIMUDA",
@@ -49,6 +50,7 @@ function urlFilter(saatIni: Filter, kunci: keyof Filter, nilai: string): string 
 }
 
 export default async function RekapPage(props: PageProps<"/rekap">) {
+  await requireRole("rekap", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
@@ -122,7 +124,7 @@ export default async function RekapPage(props: PageProps<"/rekap">) {
     [
       filter.jk === "putra" || filter.jk === "putri" ? labelJenisKelamin[filter.jk] : null,
       filter.wilayah ? `Bendlay ${filter.wilayah}` : null,
-      filter.kategori === "remaja" || filter.kategori === "pra-nikah" ? labelKategori[filter.kategori as Kategori] : null,
+      DAFTAR_KATEGORI.includes(filter.kategori as Kategori) ? labelKategori[filter.kategori as Kategori] : null,
     ]
       .filter(Boolean)
       .join(" · ") || "Semua peserta";
@@ -189,8 +191,9 @@ export default async function RekapPage(props: PageProps<"/rekap">) {
         <FilterChip label="Putri" href={urlFilter(filter, "jk", "putri")} aktif={filter.jk === "putri"} />
         <FilterChip label="Bendlay 2" href={urlFilter(filter, "wilayah", "2")} aktif={filter.wilayah === "2"} />
         <FilterChip label="Bendlay 4" href={urlFilter(filter, "wilayah", "4")} aktif={filter.wilayah === "4"} />
-        <FilterChip label="Remaja" href={urlFilter(filter, "kategori", "remaja")} aktif={filter.kategori === "remaja"} />
-        <FilterChip label="Pra-nikah" href={urlFilter(filter, "kategori", "pra-nikah")} aktif={filter.kategori === "pra-nikah"} />
+        {DAFTAR_KATEGORI.map((k) => (
+          <FilterChip key={k} label={labelKategori[k]} href={urlFilter(filter, "kategori", k)} aktif={filter.kategori === k} />
+        ))}
       </div>
 
       {/* Ringkasan angka */}

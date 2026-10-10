@@ -134,8 +134,8 @@ src/
 2. **Semua input divalidasi dengan Zod** di sisi server.
 3. **Kunci rahasia tidak boleh memakai awalan `NEXT_PUBLIC_`** dan tidak boleh masuk Git. File `.env` wajib ada di `.gitignore`.
 4. **Token QR dibuat acak** (`crypto.randomBytes`, minimal 128 bit) dan **tidak berisi data pribadi**.
-5. **Data sodaqoh tidak bisa dihapus.** Setiap perubahan tercatat di `audit_log` beserta alasan.
-6. **Peserta tidak dihapus,** cukup diubah statusnya, supaya riwayat kehadiran tetap utuh.
+5. **Pengurus tidak bisa menghapus, hanya suspend** dengan alasan dan bisa dipulihkan (KONSEP bagian 3.3). Hapus permanen hanya untuk Administrator, hanya pada data yang sudah di-suspend, dan salinannya disimpan di `audit_log` (KONSEP bagian 3.4). `audit_log` tidak pernah dihapus.
+6. **Setiap tambah, ubah, suspend, dan pulihkan tercatat di `audit_log`.** Untuk sodaqoh, kehadiran, dan data peserta, alasan wajib diisi.
 7. Jangan memakai `$queryRawUnsafe` di Prisma.
 
 ---

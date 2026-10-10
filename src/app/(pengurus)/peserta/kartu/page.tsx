@@ -3,7 +3,9 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { ArrowLeft } from "lucide-react";
 import { PilihCetakKartu, type PesertaKartu } from "@/components/kartu/PilihCetakKartu";
-import { daftarPeserta, kartuContoh, kontakKartuHilang } from "@/lib/mock";
+import { ambilPesertaUntukKartu } from "@/lib/data/peserta";
+import { kontakKartuHilang } from "@/lib/mock";
+import { requireRole } from "@/lib/pengguna";
 import { tanggalHariIniWib } from "@/lib/peserta";
 
 export const metadata: Metadata = {
@@ -13,21 +15,13 @@ export const metadata: Metadata = {
 // Cetak kartu peserta (KONSEP 5.2 dan 8.1). Hanya peserta aktif yang bisa dicetak.
 // /peserta/kartu?id=p03 langsung memilih satu peserta (misalnya untuk cetak ulang kartu hilang).
 export default async function CetakKartuPage(props: PageProps<"/peserta/kartu">) {
+  // Token kartu hanya dikirim ke pengurus yang berhak mengelola peserta, karena dipakai
+  // untuk membuat QR di browser saat mencetak. Peran lain tidak bisa membuka halaman ini.
+  await requireRole("kartu", "tambah");
   await connection();
   const { id } = await props.searchParams;
 
-  // SEMENTARA (data contoh): token dikirim ke browser untuk dibuat QR-nya.
-  // Saat database tersambung, PDF dibuat di Route Handler yang dicek requireRole().
-  const peserta: PesertaKartu[] = daftarPeserta
-    .filter((p) => p.status === "aktif")
-    .sort((a, b) => a.nama.localeCompare(b.nama, "id"))
-    .map((p) => ({
-      id: p.id,
-      nama: p.nama,
-      jenisKelamin: p.jenisKelamin,
-      wilayah: p.wilayah,
-      token: kartuContoh.find((k) => k.pesertaId === p.id)?.token ?? "",
-    }));
+  const peserta: PesertaKartu[] = await ambilPesertaUntukKartu();
 
   const satuPeserta = typeof id === "string" && peserta.some((p) => p.id === id);
   const awalTerpilih = satuPeserta ? [id] : peserta.map((p) => p.id);

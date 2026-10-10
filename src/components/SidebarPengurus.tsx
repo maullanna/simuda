@@ -4,11 +4,14 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { LabelMelayang } from "@/components/LabelMelayang";
+import { TombolAkunSaya } from "@/components/TombolAkunSaya";
 import { TombolKeluar } from "@/components/TombolKeluar";
+import { boleh } from "@/lib/hak-akses";
+import type { Peran } from "@/lib/kepengurusan";
 import { kelompokMenu, menuAktif } from "@/lib/menu";
 
 // Data pengguna yang sedang masuk, dikirim dari layout (server) yang sudah memeriksa sesinya.
-export type InfoPengguna = { nama: string; jabatan: string; wilayah: string };
+export type InfoPengguna = { nama: string; jabatan: string; wilayah: string; peran: Peran };
 
 // "use client" karena butuh usePathname untuk menandai menu yang sedang dibuka.
 // State lebar/ciut dan laci HP disimpan di KerangkaPengurus, karena navbar juga memakainya.
@@ -37,7 +40,11 @@ function IsiSidebar({ ciut, pengguna, saatNavigasi }: { ciut: boolean; pengguna:
   return (
     <>
       <nav className="mt-4 flex flex-col gap-4">
-        {kelompokMenu.map((kelompok, i) => (
+        {/* Hanya menu yang boleh dilihat peran ini (server tetap memeriksa ulang di tiap halaman) */}
+        {kelompokMenu
+          .map((k) => ({ ...k, item: k.item.filter((m) => boleh(pengguna.peran, m.fitur, "lihat")) }))
+          .filter((k) => k.item.length > 0)
+          .map((kelompok, i) => (
           <div key={kelompok.judul} className="flex flex-col gap-1">
             {ciut ? (
               i > 0 && <div className="mx-auto mb-2 h-px w-8 bg-outline-variant" />
@@ -83,6 +90,7 @@ function IsiSidebar({ ciut, pengguna, saatNavigasi }: { ciut: boolean; pengguna:
             {pengguna.nama.charAt(0)}
             <LabelMelayang teks={`${pengguna.nama} · ${pengguna.jabatan}`} />
           </div>
+          <TombolAkunSaya saatNavigasi={saatNavigasi} />
           <TombolKeluar />
         </div>
       ) : (
@@ -93,6 +101,7 @@ function IsiSidebar({ ciut, pengguna, saatNavigasi }: { ciut: boolean; pengguna:
               {pengguna.jabatan} · {pengguna.wilayah}
             </p>
           </div>
+          <TombolAkunSaya posisiLabel="bawah" saatNavigasi={saatNavigasi} />
           <TombolKeluar posisiLabel="bawah" />
         </div>
       )}

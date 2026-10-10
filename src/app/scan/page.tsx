@@ -13,8 +13,8 @@ export const metadata: Metadata = {
 // Layar petugas scan (KONSEP 4.2). Sengaja di luar folder (pengurus), jadi tampil
 // penuh tanpa sidebar: petugas scan cukup melihat kamera dan hitungan hadir.
 export default async function ScanPage(props: PageProps<"/scan">) {
-  // Scan kehadiran boleh oleh semua pengurus kecuali Kyai, dan oleh petugas scan (KONSEP bagian 3).
-  await requireRole(["wakil", "ketua", "sekretaris", "bendahara", "pengurus", "petugas_scan"]);
+  // Scan kehadiran boleh oleh semua pengurus kecuali Kyai, dan oleh petugas scan (KONSEP bagian 3.2).
+  await requireRole("scan", "jalankan");
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi, kehadiran } = dataAbsensiContoh(hariIni);

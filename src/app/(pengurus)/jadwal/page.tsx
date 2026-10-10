@@ -6,6 +6,7 @@ import { TombolCatatan, TombolIsiMateri, TombolTambahSesi } from "@/components/j
 import { dataAbsensiContoh } from "@/lib/mock";
 import { tanggalHariIniWib } from "@/lib/peserta";
 import { formatTanggal, jadwalRutin, labelSasaran, type Sesi } from "@/lib/sesi";
+import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Jadwal & materi · SIMUDA",
@@ -96,6 +97,7 @@ function KartuCatatan({ sesi }: { sesi: Sesi }) {
 
 export default async function JadwalPage() {
   // Isi halaman bergantung pada tanggal hari ini, jadi dibuat saat dibuka, bukan saat build.
+  await requireRole("sesi", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi } = dataAbsensiContoh(hariIni);

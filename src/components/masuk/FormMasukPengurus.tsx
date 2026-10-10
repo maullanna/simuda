@@ -37,7 +37,9 @@ export function FormMasukPengurus({ tujuan }: { tujuan: string }) {
         umum:
           error.status === 429
             ? "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi."
-            : "Email atau kata sandi salah.",
+            : error.status === 403
+              ? "Akses akunmu sedang dicabut. Hubungi Ketua Muda/i wilayahmu."
+              : "Email atau kata sandi salah.",
       });
       return;
     }

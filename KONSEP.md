@@ -3,7 +3,7 @@
 Sistem absensi dan manajemen pengajian muda/i Bendlay 2 & Bendlay 4.
 Dokumen ini adalah acuan utama untuk pengembangan. Kalau ada keputusan baru, perbarui dokumen ini dulu sebelum mengubah kode.
 
-Terakhir diperbarui: 4 Oktober 2026
+Terakhir diperbarui: 10 Oktober 2026
 
 ---
 
@@ -34,31 +34,117 @@ Peserta absen cukup dengan menunjukkan kartu QR, tanpa mengisi form.
 | Pengajian | Bersama untuk Bendlay 2 dan Bendlay 4 |
 | Kepengurusan | Terpisah: Bendlay 2 dan Bendlay 4 |
 | Putra dan putri | Selalu dipisah |
-| Kategori | Remaja (18 tahun ke bawah) dan Pra-nikah (19 tahun ke atas), dihitung otomatis dari tanggal lahir |
-| Sasaran pengajian | Bisa khusus remaja, khusus pra-nikah, atau gabungan |
+| Kategori | Pra-remaja (15 tahun ke bawah), Remaja (16–18 tahun), dan Pra-nikah (19 tahun ke atas), dihitung otomatis dari tanggal lahir |
+| Sasaran pengajian | Bisa khusus pra-remaja, khusus remaja, khusus pra-nikah, atau gabungan |
 | Penanggung jawab | Ketua Muda/i |
 
 ---
 
 ## 3. Peran pengguna dan hak akses
 
-| Akses | Kyai | Wakil | Ketua | Sekretaris | Bendahara | Pengurus | Petugas scan | Peserta |
-|---|---|---|---|---|---|---|---|---|
-| Beranda pengurus | Lihat | Lihat | Lihat | Lihat | Lihat | Lihat | – | – |
-| Data peserta | Lihat | Kelola | Kelola | Kelola | Lihat | Lihat | – | Data sendiri |
-| Scan kehadiran | – | Ya | Ya | Ya | Ya | Ya | Ya | – |
-| Catat izin | – | Ya | Ya | Ya | – | Ya | – | Tahap 2: ajukan sendiri |
-| Jadwal & materi | Lihat | Kelola | Kelola | Kelola | Lihat | Lihat | – | Lihat |
-| Rekap & perlu dihubungi | Lihat | Lihat | Lihat | Kelola | Lihat | Wilayahnya | – | – |
-| Sodaqoh | Lihat | Lihat | Lihat | – | Kelola | – | – | – |
-| Musyawarah | Lihat | Kelola | Kelola | Kelola | Lihat | Lihat | – | – |
-| Masukan | Lihat | Lihat | Lihat | Lihat | – | – | – | Kirim |
-| Kepengurusan & akun | Lihat | Kelola | Kelola | – | – | – | – | – |
+Setiap pengurus punya **jabatan** (tulisan yang tampil, misalnya "Wakil Ketua 1" atau "Penerobos") dan satu **peran di sistem** (yang menentukan apa yang boleh dibuka dan diubah). Hak akses diperiksa di server untuk setiap tindakan, tidak cukup dengan menyembunyikan tombol.
+
+### 3.1 Peran
+
+| Peran | Dipegang oleh | Fokus |
+|---|---|---|
+| Administrator | Pengembang/pengelola sistem | Seluruh aplikasi, termasuk akun dan pengaturan |
+| Kyai | Pimpinan | Memantau semua, tidak mengubah data |
+| Wakil | Pimpinan (wakil Kyai) | Mengelola kegiatan dan kepengurusan |
+| Ketua | Ketua dan Wakil Ketua 1/2 tiap wilayah | Mengelola kegiatan dan kepengurusan |
+| Sekretaris | Sekretaris tiap wilayah | Peserta, absensi, jadwal, rekap, musyawarah |
+| Bendahara | Bendahara tiap wilayah | Sodaqoh (pemasukan dan pengeluaran) |
+| Pengurus | Penerobos, Keputrian, seksi lain | Scan, izin, menghubungi peserta di wilayahnya |
+| Petugas scan | Muda/i yang digilir | Hanya layar Scanner |
+| Peserta (tahap 2) | Muda/i | Data dan kartu sendiri, jadwal, kirim masukan |
+
+### 3.2 Hak akses per fitur
+
+Kode: **L** = lihat, **T** = tambah, **U** = ubah, **S** = suspend dan pulihkan (lihat 3.3), **Ya** = boleh menjalankan, **–** = tidak ada akses. Administrator selalu punya semua hak, ditambah **H** = hapus permanen (hanya Administrator, lihat 3.4).
+
+| Fitur | Admin | Kyai | Wakil | Ketua | Sekretaris | Bendahara | Pengurus | Petugas scan | Peserta |
+|---|---|---|---|---|---|---|---|---|---|
+| **Beranda** | | | | | | | | | |
+| Beranda pengurus | L | L | L | L | L | L | L | – | Beranda sendiri |
+| **Peserta** | | | | | | | | | |
+| Data peserta | LTUS | L | LTUS | LTUS | LTUS | L | L | – | Data sendiri: L, U (no HP, foto) |
+| Impor peserta dari Excel | Ya | – | Ya | Ya | Ya | – | – | – | – |
+| Kartu: cetak, ganti kartu hilang | LTS | L | LTS | LTS | LTS | – | – | – | Kartu sendiri: L |
+| **Absensi** | | | | | | | | | |
+| Daftar hadir per sesi | L | L | L | L | L | L | L | Sesi yang dibuka | – |
+| Buka dan tutup sesi | Ya | – | Ya | Ya | Ya | – | Ya | – | – |
+| Scan kehadiran | Ya | – | Ya | Ya | Ya | Ya | Ya | Ya | – |
+| Input manual dan catat izin | T | – | T | T | T | – | T | – | Tahap 2: ajukan izin sendiri |
+| Koreksi kehadiran (ubah status, batalkan scan salah) | US | – | US | US | US | – | – | – | – |
+| **Jadwal dan materi** | | | | | | | | | |
+| Sesi pengajian | LTUS | L | LTUS | LTUS | LTUS | L | L | – | L (jadwalnya sendiri) |
+| Materi dan lampiran | LTUS | L | LTUS | LTUS | LTUS | L | L | – | L |
+| Pemateri | LTUS | L | LTUS | LTUS | LTUS | L | L | – | – |
+| **Rekap** | | | | | | | | | |
+| Rekap dan grafik kehadiran | L | L | L | L | L | L | L (wilayahnya) | – | – |
+| Unduh rekap Excel/PDF | Ya | Ya | Ya | Ya | Ya | – | – | – | – |
+| Perlu dihubungi (tandai sudah dihubungi) | LU | L | LU | LU | LU | – | LU (wilayahnya) | – | – |
+| **Sodaqoh** | | | | | | | | | |
+| Pemasukan per pengajian (dua penghitung) | LTUS | L | L | L | – | LTUS | – | – | – |
+| Pengeluaran (wajib foto nota) | LTUS | L | L | L | – | LTUS | – | – | – |
+| Riwayat perubahan sodaqoh | L | L | L | L | – | L | – | – | – |
+| **Musyawarah** | | | | | | | | | |
+| Musyawarah: jadwal, agenda, hasil | LTUS | L | LTUS | LTUS | LTUS | L | L | – | – |
+| Tindak lanjut | LTUS | L | LTUS | LTUS | LTUS | L, U status tugasnya | L, U status tugasnya | – | – |
+| **Masukan** | | | | | | | | | |
+| Masukan peserta | LS | L | LS | LS | L | – | – | – | T (kirim) |
+| **Kepengurusan** | | | | | | | | | |
+| Data pengurus | LTUS | L | LTUS | LTUS | – | – | – | – | – |
+| Akun login: buat, reset kata sandi, suspend | Ya | – | Ya | Ya | – | – | – | – | – |
+| Petugas scan: tunjuk dan cabut | Ya | – | Ya | Ya | – | – | – | – | – |
+| Akun saya: ganti kata sandi sendiri | Ya | Ya | Ya | Ya | Ya | Ya | Ya | Ya | Tahap 2 (OTP) |
+| **Sistem** | | | | | | | | | |
+| Riwayat perubahan semua modul | L | L | L | L | – | – | – | – | – |
+| Pengaturan (WhatsApp, notifikasi, backup) | Ya | – | – | – | – | – | – | – | – |
 
 Catatan:
 - Petugas scan adalah muda/i yang juga peserta. Satu orang bisa punya peran peserta dan petugas scan sekaligus.
 - Peran petugas scan bisa diberikan dan dicabut kapan saja, karena digilir.
+- Administrator tidak termasuk struktur pengurus Bendlay 2/4. Data dan akun Administrator hanya bisa diubah oleh Administrator.
+- Tidak ada yang bisa men-suspend akun atau mengubah perannya sendiri.
+- "Wilayahnya" berarti hanya peserta di wilayah (Bendlay 2 atau 4) tempat pengurus itu bertugas.
 - Tabel ini masih draf dan perlu dikonfirmasi ke Ketua Muda/i.
+
+### 3.3 Suspend, bukan hapus
+
+Pengurus tidak punya tombol hapus. Data yang salah, sudah tidak dipakai, atau dibatalkan cukup **di-suspend**, supaya riwayat selalu utuh dan bisa dilacak.
+
+1. **Wajib alasan.** Setiap suspend mencatat siapa, kapan, dan alasannya di `audit_log`.
+2. **Tidak dihitung, tapi tetap ada.** Data yang di-suspend tidak tampil di daftar biasa dan tidak ikut dihitung (saldo, rekap, jumlah peserta sasaran). Data itu tetap bisa dilihat lewat filter "Disuspend".
+3. **Bisa dipulihkan.** Yang boleh memulihkan sama dengan yang boleh men-suspend (kode S di tabel 3.2), juga dengan alasan.
+4. **Mengubah data penting juga wajib alasan:** sodaqoh, kehadiran, dan data peserta. Nilai lama dan baru tersimpan.
+
+Arti suspend untuk tiap data:
+
+| Data | Saat di-suspend |
+|---|---|
+| Peserta | Tidak aktif (pindah, menikah, berhenti). Kartunya tidak bisa dipakai scan. Riwayat kehadiran tetap ada |
+| Kartu | Tidak berlaku (hilang atau rusak), diganti kartu baru |
+| Pengurus dan akun login | Tidak bisa masuk, semua sesi login dikeluarkan |
+| Petugas scan | Peran dicabut, bisa ditunjuk lagi kapan saja |
+| Sesi pengajian | Batal. Tidak dihitung di rekap |
+| Kehadiran | Catatan salah (misalnya salah scan) dibatalkan |
+| Materi, lampiran, pemateri | Disembunyikan dari peserta dan daftar |
+| Sodaqoh | Tidak dihitung ke saldo, tetap terlihat di riwayat |
+| Musyawarah dan tindak lanjut | Dibatalkan |
+| Masukan | Disembunyikan (misalnya isinya tidak pantas) |
+
+Pengecualian: data contoh (bukan data asli) boleh dihapus sekali saat aplikasi mulai memakai data asli.
+
+### 3.4 Hapus permanen (hanya Administrator)
+
+Hapus permanen hanya ada untuk Administrator, untuk keadaan khusus seperti data ganda, data uji, atau permintaan penghapusan data pribadi. Pengamannya:
+
+1. **Hanya data yang sudah di-suspend** yang bisa dihapus. Jadi selalu ada dua langkah: suspend dulu, baru hapus.
+2. **Konfirmasi berlapis:** Administrator mengetik ulang nama data yang akan dihapus dan mengisi alasan.
+3. **Jejak tetap ada:** salinan data yang dihapus disimpan di `audit_log` (aksi = hapus). Untuk permintaan penghapusan data pribadi, salinan itu tidak berisi nama, no HP, dan foto.
+4. **`audit_log` tidak pernah bisa dihapus**, termasuk oleh Administrator.
+5. Menghapus peserta ikut menghapus kartu dan riwayat kehadirannya, jadi rekap bulan-bulan lalu ikut berubah. Tampilan konfirmasi wajib memberi tahu hal ini.
 
 ---
 
@@ -69,7 +155,7 @@ Catatan:
 | Menu | URL | Isi |
 |---|---|---|
 | Beranda | `/dashboard` | Pengajian hari ini (jumlah hadir putra dan putri), tombol buka scanner, ringkasan angka (peserta aktif, hadir terakhir, izin minggu ini, saldo sodaqoh), grafik kehadiran 8 pengajian terakhir, daftar perlu dihubungi, jadwal minggu ini, sodaqoh terbaru |
-| Peserta | `/peserta` | Tab Semua / Remaja / Pra-nikah, filter Putra/Putri dan Bendlay 2/4, pencarian nama, tabel peserta, tombol Impor Excel, Cetak kartu, Tambah peserta |
+| Peserta | `/peserta` | Tab Semua / Pra-remaja / Remaja / Pra-nikah, filter Putra/Putri dan Bendlay 2/4, pencarian nama, tabel peserta, tombol Impor Excel, Cetak kartu, Tambah peserta |
 | Absensi | `/absensi` | Sesi hari ini dengan progres kehadiran, tombol buka scanner, input manual, tutup sesi, riwayat sesi, daftar izin tercatat |
 | Jadwal & materi | `/jadwal` | Jadwal rutin, sesi mendatang (materi dan pemateri), catatan pengajian terakhir |
 | Rekap | `/rekap` | Rekap bulanan, filter kelompok dan kategori, grafik kehadiran, daftar perlu dihubungi, rincian sesi, unduh Excel/PDF |
@@ -97,7 +183,7 @@ Catatan:
 
 ### 5.1 Data peserta
 - Data: nama, jenis kelamin (putra/putri), wilayah (Bendlay 2/4), tanggal lahir, no HP, foto, status.
-- Kategori remaja/pra-nikah **tidak diisi manual**. Dihitung dari tanggal lahir, dan otomatis berpindah saat peserta berusia 19 tahun.
+- Kategori pra-remaja/remaja/pra-nikah **tidak diisi manual**. Dihitung dari tanggal lahir, dan otomatis berpindah saat peserta berusia 16 dan 19 tahun.
 - Status: aktif atau tidak aktif. Peserta tidak pernah dihapus.
 - Impor dari Excel untuk data awal.
 
@@ -123,7 +209,7 @@ Catatan:
 - Peserta yang sering izin berturut-turut ikut masuk daftar "perlu dihubungi".
 
 ### 5.5 Sesi pengajian
-- Setiap sesi punya: tanggal, jam, jenis kelamin (putra/putri), sasaran (remaja/pra-nikah/gabungan), pemateri, materi.
+- Setiap sesi punya: tanggal, jam, jenis kelamin (putra/putri), sasaran (pra-remaja/remaja/pra-nikah/gabungan), pemateri, materi.
 - Saat sesi ditutup, peserta sasaran yang belum tercatat hadir atau izin otomatis tercatat alpa.
 - Peserta di luar sasaran yang ikut hadir tetap dicatat hadir (usulan, perlu dikonfirmasi).
 
@@ -143,7 +229,8 @@ Catatan:
 - Setiap pemasukan dicatat oleh dua penghitung.
 - Setiap pengeluaran disertai foto nota.
 - Saldo dihitung otomatis.
-- Data tidak bisa dihapus. Setiap perubahan tercatat beserta alasan.
+- Pengurus tidak bisa menghapus, hanya men-suspend (tidak dihitung ke saldo). Hapus permanen hanya oleh Administrator (bagian 3.4). Setiap perubahan tercatat beserta alasan.
+- Yang mengelola: Bendahara (tambah, ubah, suspend). Kyai, Wakil, dan Ketua bisa melihat.
 
 ### 5.9 Musyawarah
 - Jadwal, agenda, hasil musyawarah.
@@ -185,18 +272,20 @@ Catatan:
 | `peserta` | nama, jenis_kelamin, wilayah, tanggal_lahir, no_hp, foto_url, status, tanggal_bergabung, user_id | Kategori dihitung dari tanggal_lahir, tidak disimpan |
 | `kartu` | peserta_id, token, aktif, dibuat_at, dinonaktifkan_at | Token unik, maksimal satu kartu aktif per peserta |
 | `pemateri` | nama, keterangan | |
-| `sesi_pengajian` | tanggal, jam_mulai, jenis_kelamin, sasaran, pemateri_id, materi, catatan, status | sasaran: remaja / pra-nikah / gabungan. status: terjadwal / berlangsung / selesai / batal |
+| `sesi_pengajian` | tanggal, jam_mulai, jenis_kelamin, sasaran, pemateri_id, materi, catatan, status | sasaran: pra-remaja / remaja / pra-nikah / gabungan. status: terjadwal / berlangsung / selesai / batal |
 | `kehadiran` | sesi_id, peserta_id, status, metode, keterangan, dicatat_oleh, waktu | Unik per (sesi_id, peserta_id). status: hadir / izin / alpa. metode: qr / manual / izin |
 | `lampiran` | sesi_id, url, nama_file, tipe | File disimpan di storage, database hanya menyimpan URL |
-| `pengurus` | user_id, nama, jabatan, wilayah, peran | peran: kyai / wakil / ketua / sekretaris / bendahara / pengurus / petugas_scan |
+| `pengurus` | user_id, nama, jabatan, wilayah, peran | peran: admin / kyai / wakil / ketua / sekretaris / bendahara / pengurus / petugas_scan |
 | `sodaqoh` | tanggal, sesi_id, jenis, jumlah, keterangan, penghitung_1_id, penghitung_2_id, bukti_url, dicatat_oleh | jenis: pemasukan / pengeluaran. Jumlah dalam rupiah, bilangan bulat |
-| `audit_log` | user_id, tabel, record_id, aksi, data_lama, data_baru, alasan, waktu | Wajib untuk perubahan sodaqoh dan data peserta |
+| `audit_log` | user_id, tabel, record_id, aksi, data_lama, data_baru, alasan, waktu | Wajib untuk setiap tambah, ubah, suspend, pulihkan, dan hapus. aksi: buat / ubah / suspend / pulihkan / hapus. Tidak pernah dihapus |
 | `musyawarah` | tanggal, agenda, lokasi, hasil, notulis_id, status | |
 | `tindak_lanjut` | musyawarah_id, tugas, pic_id, tenggat, status | status: belum / berjalan / selesai |
 | `masukan` | sesi_id, peserta_id, isi, dibuat_at | peserta_id kosong berarti tanpa nama |
 | `notifikasi_log` | penerima, kanal, jenis, isi, status, dikirim_at | Tahap 3 |
 | `push_subscription` | user_id, endpoint, p256dh, auth | Tahap 3 |
 | Tabel Better Auth | user, session, account, verification | Dibuat otomatis |
+
+Suspend (bagian 3.3): tabel yang sudah punya status memakai statusnya (`peserta.status`, `kartu.aktif`, `pengurus.aktif`, `sesi_pengajian.status = batal`). Tabel `kehadiran`, `lampiran`, `pemateri`, `sodaqoh`, `musyawarah`, `tindak_lanjut`, dan `masukan` mendapat kolom `disuspend_at`, `disuspend_oleh`, `alasan_suspend`. Alasan selalu tersimpan juga di `audit_log`.
 
 Catatan:
 - Persetujuan wali untuk peserta remaja **dikelola di luar sistem**, jadi tidak ada tabel wali.
@@ -299,14 +388,17 @@ Detail harian ada di file `Timeline-Sistem-Pengajian.xlsx`.
 | Nama sistem | SIMUDA (Sistem Informasi Muda/i) |
 | Izin | Tidak perlu persetujuan, diajukan sebelum pengajian |
 | Putra/putri | Selalu dipisah |
-| Remaja/pra-nikah | Dihitung otomatis dari tanggal lahir, kadang gabung kadang pisah |
+| Kategori | Pra-remaja (≤15), remaja (16–18), pra-nikah (≥19), dihitung otomatis dari tanggal lahir, kadang gabung kadang pisah |
 | Kepengurusan | Terpisah Bendlay 2 dan Bendlay 4, pengajian bersama |
 | Pengeluaran sodaqoh | Wajib dicatat |
 | Penanggung jawab | Ketua Muda/i |
 | Petugas scan | Muda/i yang juga peserta, digilir |
+| Administrator | Satu peran khusus yang boleh mengelola seluruh aplikasi (diputuskan 10 Oktober 2026) |
 | Kartu | Kartu biasa: nama, foto, QR |
 | Persetujuan wali | Di luar sistem |
 | Pengingat WhatsApp | Sekali seminggu |
+| Hapus data | Pengurus hanya bisa suspend (dengan alasan, bisa dipulihkan). Hapus permanen hanya oleh Administrator, untuk data yang sudah di-suspend (diputuskan 10 Oktober 2026) |
+| Peran per fitur | Hak akses diatur per fitur dan per tindakan (lihat, tambah, ubah, suspend), bagian 3.2 |
 
 ---
 
@@ -321,4 +413,5 @@ Detail harian ada di file `Timeline-Sistem-Pengajian.xlsx`.
 - [ ] Peserta pra-nikah yang sudah menikah: tidak aktif, atau status lain?
 - [ ] Siapa yang menyimpan bukti persetujuan wali untuk peserta remaja?
 - [ ] Peserta di luar sasaran yang ikut hadir: tetap dicatat hadir?
-- [ ] Hak akses pada bagian 3 sudah sesuai?
+- [ ] Hak akses pada bagian 3.2 sudah sesuai? (perlu dikonfirmasi ke Ketua Muda/i)
+- [x] Kalau peserta atau walinya meminta datanya dihapus: Administrator men-suspend lalu menghapus permanen (bagian 3.4).

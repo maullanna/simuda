@@ -57,7 +57,7 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
       "1. Isi satu peserta per baris di sheet \"Peserta\". Hapus dua baris contoh sebelum mengunggah.",
       "2. Jenis kelamin: Putra atau Putri.",
       "3. Wilayah: Bendlay 2 atau Bendlay 4.",
-      "4. Tanggal lahir: 17/08/2009 atau 2009-08-17. Kategori remaja/pra-nikah dihitung otomatis.",
+      "4. Tanggal lahir: 17/08/2009 atau 2009-08-17. Kategori pra-remaja/remaja/pra-nikah dihitung otomatis.",
       "5. No HP boleh dikosongkan.",
     ].forEach((t) => petunjuk.addRow([t]));
     unduhBlob(new Blob([await buku.xlsx.writeBuffer()]), "template-impor-peserta-simuda.xlsx");
@@ -145,7 +145,7 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
         <section className="flex flex-col gap-3 rounded-[28px] bg-surface-low p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-primary">Langkah 1</p>
           <h2 className="font-extrabold">Isi template Excel</h2>
-          <p className="text-sm text-on-surface-variant">Kolom: {KOLOM_IMPOR.join(", ")}. Kategori remaja/pra-nikah tidak perlu diisi.</p>
+          <p className="text-sm text-on-surface-variant">Kolom: {KOLOM_IMPOR.join(", ")}. Kategori pra-remaja/remaja/pra-nikah tidak perlu diisi.</p>
           <div>
             <md-outlined-button type="button" onClick={unduhTemplate}>
               <Download slot="icon" size={18} />

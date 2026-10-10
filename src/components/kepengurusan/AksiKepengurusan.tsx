@@ -1,37 +1,47 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Pencil, UserPlus } from "lucide-react";
-import { Dialog, HasilSimpan } from "@/components/Dialog";
+import { LoaderCircle, Pencil, UserPlus } from "lucide-react";
+import { simpanPengurus } from "@/app/(pengurus)/kepengurusan/aksi";
+import { Dialog } from "@/components/Dialog";
 import { PilihanSegmen } from "@/components/PilihanSegmen";
 import { PERAN_PENGURUS, labelPeran, periksaPengurus, type GalatPengurus, type Pengurus } from "@/lib/kepengurusan";
 
-// Form tambah/ubah pengurus. Nanti hanya Wakil dan Ketua yang boleh (KONSEP bagian 3).
+// Form tambah/ubah pengurus. Hanya Wakil dan Ketua (+ Administrator) yang boleh; server memeriksa ulang.
 function FormPengurus({ pengurus, selesai }: { pengurus?: Pengurus; selesai: () => void }) {
   const [galat, setGalat] = useState<GalatPengurus>({});
-  const [hasil, setHasil] = useState<string | null>(null);
+  const [pesanUmum, setPesanUmum] = useState<string>();
+  const [proses, setProses] = useState(false);
 
-  function simpan(e: FormEvent<HTMLFormElement>) {
+  async function simpan(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const d = new FormData(e.currentTarget);
-    const isian = {
+    // 1) Pemeriksaan cepat di browser.
+    const g = periksaPengurus({
       nama: String(d.get("nama") ?? ""),
       jabatan: String(d.get("jabatan") ?? ""),
       wilayah: String(d.get("wilayah") ?? ""),
       peran: String(d.get("peran") ?? ""),
-    };
-    const g = periksaPengurus(isian);
+    });
     setGalat(g);
+    setPesanUmum(undefined);
     if (Object.keys(g).length > 0) return;
-    setHasil(`${isian.nama.trim()} · ${isian.jabatan.trim()} ${isian.wilayah} · peran ${labelPeran[isian.peran as Pengurus["peran"]]}`);
-  }
 
-  if (hasil) {
-    return (
-      <HasilSimpan judul={pengurus ? "Perubahan siap disimpan" : "Pengurus siap ditambahkan"} tutup={selesai}>
-        <p className="text-sm">{hasil}</p>
-      </HasilSimpan>
-    );
+    // 2) Simpan lewat Server Action (hak akses & isian diperiksa ulang di server).
+    setProses(true);
+    try {
+      const hasil = await simpanPengurus(pengurus?.id ?? null, d);
+      if (!hasil.ok) {
+        setGalat((hasil.galat ?? {}) as GalatPengurus);
+        setPesanUmum(hasil.galat ? undefined : hasil.pesan);
+        return;
+      }
+      selesai(); // daftar di halaman ikut diperbarui oleh revalidatePath di server
+    } catch {
+      setPesanUmum("Gagal menyimpan. Periksa koneksi internet lalu coba lagi.");
+    } finally {
+      setProses(false);
+    }
   }
 
   return (
@@ -44,6 +54,11 @@ function FormPengurus({ pengurus, selesai }: { pengurus?: Pengurus; selesai: () 
       }}
       className="flex flex-col gap-5"
     >
+      {pesanUmum && (
+        <p role="alert" className="rounded-2xl bg-error-container px-4 py-3 text-sm text-on-error-container">
+          {pesanUmum}
+        </p>
+      )}
       <md-outlined-text-field name="nama" label="Nama lengkap" value={pengurus?.nama ?? ""} error={Boolean(galat.nama)} error-text={galat.nama} className="w-full" />
       <md-outlined-text-field
         name="jabatan"
@@ -87,7 +102,10 @@ function FormPengurus({ pengurus, selesai }: { pengurus?: Pengurus; selesai: () 
         <md-text-button type="button" onClick={selesai}>
           Batal
         </md-text-button>
-        <md-filled-button type="submit">{pengurus ? "Simpan perubahan" : "Tambah pengurus"}</md-filled-button>
+        <md-filled-button type="submit" disabled={proses}>
+          {proses && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
+          {proses ? "Menyimpan..." : pengurus ? "Simpan perubahan" : "Tambah pengurus"}
+        </md-filled-button>
       </div>
     </form>
   );

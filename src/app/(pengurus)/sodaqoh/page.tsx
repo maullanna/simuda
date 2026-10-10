@@ -12,6 +12,7 @@ import { bacaPeriode } from "@/lib/periode";
 import { tanggalHariIniWib } from "@/lib/peserta";
 import { formatTanggal } from "@/lib/sesi";
 import { hitungSaldoBerjalan, ringkasSodaqoh } from "@/lib/sodaqoh";
+import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Sodaqoh · SIMUDA",
@@ -24,6 +25,7 @@ function ambilTeks(nilai: string | string[] | undefined): string | undefined {
 // Sodaqoh (KONSEP 5.8): saldo otomatis, pemasukan dihitung dua orang, pengeluaran dengan nota,
 // tidak ada hapus, dan setiap perubahan tercatat beserta alasannya.
 export default async function SodaqohPage(props: PageProps<"/sodaqoh">) {
+  await requireRole("sodaqohMasuk", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
   const { transaksi, riwayat } = dataSodaqohContoh(hariIni);

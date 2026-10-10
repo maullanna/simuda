@@ -11,7 +11,7 @@ import { BarisStat, KotakStat } from "@/components/beranda/KotakStat";
 import { daftarPeserta, dataAbsensiContoh, dataSodaqohContoh } from "@/lib/mock";
 import { requireRole } from "@/lib/pengguna";
 import { akhirBulan, awalBulan, bacaPeriode } from "@/lib/periode";
-import { kategoriPeserta, tanggalHariIniWib } from "@/lib/peserta";
+import { DAFTAR_KATEGORI, kategoriPeserta, labelKategori, tanggalHariIniWib } from "@/lib/peserta";
 import { ringkasSodaqoh } from "@/lib/sodaqoh";
 import {
   formatTanggal,
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
 export default async function DashboardPage(props: PageProps<"/dashboard">) {
   // Beranda menampilkan data hari ini, jadi dibuat saat dibuka, bukan saat build.
   // Aturan keamanan no. 1: halaman pengurus selalu memeriksa sesi dan peran sendiri.
-  const pengguna = await requireRole();
+  const pengguna = await requireRole("beranda", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
@@ -56,8 +56,11 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
 
   // Peserta aktif
   const aktif = daftarPeserta.filter((p) => p.status === "aktif");
-  const jumlahRemaja = aktif.filter((p) => kategoriPeserta(p.tanggalLahir) === "remaja").length;
-  const jumlahPraNikah = aktif.length - jumlahRemaja;
+  const komposisiKategori = DAFTAR_KATEGORI.map((k, i) => ({
+    label: labelKategori[k],
+    jumlah: aktif.filter((p) => kategoriPeserta(p.tanggalLahir) === k).length,
+    warna: ["bg-grafik-1", "bg-grafik-2", "bg-grafik-3"][i],
+  }));
 
   // Kehadiran per hari pengajian (putra + putri digabung), urut dari yang terlama
   const tanggalSelesai = [...new Set(sesi.filter((s) => s.status === "selesai").map((s) => s.tanggal))].sort();
@@ -153,19 +156,19 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
           catatan={`${aktif.filter((p) => p.jenisKelamin === "putra").length} putra · ${aktif.filter((p) => p.jenisKelamin === "putri").length} putri`}
           jeda={280}
         >
-          {/* Komposisi remaja / pra-nikah. Celah 2px di antara segmen, label langsung di bawah. */}
+          {/* Komposisi pra-remaja / remaja / pra-nikah. Celah 2px di antara segmen, label langsung di bawah. */}
           <div className="flex flex-col gap-1.5">
-            <div className="flex h-2.5 gap-0.5">
-              <div className="rounded-l-full bg-grafik-1" style={{ width: `${(jumlahRemaja / aktif.length) * 100}%` }} />
-              <div className="rounded-r-full bg-grafik-2" style={{ width: `${(jumlahPraNikah / aktif.length) * 100}%` }} />
+            <div className="flex h-2.5 gap-0.5 overflow-hidden rounded-full">
+              {komposisiKategori.map((k) => (
+                <div key={k.label} className={k.warna} style={{ width: `${aktif.length ? (k.jumlah / aktif.length) * 100 : 0}%` }} />
+              ))}
             </div>
-            <div className="flex justify-between text-xs font-semibold">
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-grafik-1" /> Remaja {jumlahRemaja}
-              </span>
-              <span className="inline-flex items-center gap-1.5">
-                <span className="size-2 rounded-full bg-grafik-2" /> Pra-nikah {jumlahPraNikah}
-              </span>
+            <div className="flex flex-wrap justify-between gap-x-2 text-xs font-semibold">
+              {komposisiKategori.map((k) => (
+                <span key={k.label} className="inline-flex items-center gap-1.5">
+                  <span className={`size-2 rounded-full ${k.warna}`} /> {k.label} {k.jumlah}
+                </span>
+              ))}
             </div>
           </div>
         </KotakStat>

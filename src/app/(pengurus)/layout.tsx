@@ -23,7 +23,7 @@ export default async function PengurusLayout({ children }: { children: React.Rea
     <KerangkaPengurus
       ciutAwal={ciut}
       hariIni={tanggalHariIniWib()}
-      pengguna={{ nama: pengguna.nama, jabatan: pengguna.jabatan, wilayah: pengguna.wilayah }}
+      pengguna={{ nama: pengguna.nama, jabatan: pengguna.jabatan, wilayah: pengguna.wilayah, peran: pengguna.peran }}
     >
       {children}
     </KerangkaPengurus>

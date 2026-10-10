@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Camera, CircleCheck } from "lucide-react";
+import { Camera, CircleCheck, LoaderCircle } from "lucide-react";
+import { simpanPeserta } from "@/app/(pengurus)/peserta/aksi";
 import { PilihanSegmen } from "@/components/PilihanSegmen";
 import {
   hitungUmur,
@@ -22,7 +23,9 @@ export function FormPeserta({ peserta, hariIni }: { peserta?: Peserta; hariIni: 
   const [tanggalLahir, setTanggalLahir] = useState(peserta?.tanggalLahir ?? "");
   const [nama, setNama] = useState(peserta?.nama ?? "");
   const [foto, setFoto] = useState<string | null>(null);
-  const [hasil, setHasil] = useState<IsianPeserta | null>(null);
+  const [hasil, setHasil] = useState<{ id: string; nama: string } | null>(null);
+  const [proses, setProses] = useState(false);
+  const [pesanUmum, setPesanUmum] = useState<string>();
   const inputFoto = useRef<HTMLInputElement>(null);
 
   // Pratinjau foto memakai URL sementara di memori browser. Saat foto diganti
@@ -48,7 +51,7 @@ export function FormPeserta({ peserta, hariIni }: { peserta?: Peserta; hariIni: 
     if (file) setFoto(URL.createObjectURL(file));
   }
 
-  function saatSimpan(e: FormEvent<HTMLFormElement>) {
+  async function saatSimpan(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const isian: IsianPeserta = {
@@ -60,12 +63,28 @@ export function FormPeserta({ peserta, hariIni }: { peserta?: Peserta; hariIni: 
       status: String(data.get("status") ?? "aktif"),
     };
 
+    // 1) Pemeriksaan cepat di browser, supaya pengurus langsung tahu kalau ada yang salah.
     const galatBaru = periksaIsianPeserta(isian, hariIni);
     setGalat(galatBaru);
+    setPesanUmum(undefined);
     if (Object.keys(galatBaru).length > 0) return;
 
-    // Database belum tersambung. Di sini nanti memanggil Server Action untuk menyimpan.
-    setHasil(isian);
+    // 2) Simpan lewat Server Action. Server memeriksa ulang hak akses dan isian (Zod),
+    //    karena pemeriksaan di browser bisa dilewati.
+    setProses(true);
+    try {
+      const hasilServer = await simpanPeserta(peserta?.id ?? null, data);
+      if (!hasilServer.ok) {
+        setGalat(hasilServer.galat as GalatIsian);
+        setPesanUmum(hasilServer.pesan ?? (Object.keys(hasilServer.galat).length ? undefined : "Gagal menyimpan."));
+        return;
+      }
+      setHasil({ id: hasilServer.id, nama: isian.nama.trim() });
+    } catch {
+      setPesanUmum("Gagal menyimpan. Periksa koneksi internet lalu coba lagi.");
+    } finally {
+      setProses(false);
+    }
   }
 
   function tambahLagi() {
@@ -82,37 +101,21 @@ export function FormPeserta({ peserta, hariIni }: { peserta?: Peserta; hariIni: 
         <div className="flex items-center gap-3">
           <CircleCheck size={28} className="text-primary" />
           <h2 className="text-xl font-extrabold">
-            {modeUbah ? "Perubahan siap disimpan" : `${hasil.nama.trim()} siap ditambahkan`}
+            {modeUbah ? "Perubahan tersimpan" : `${hasil.nama} berhasil ditambahkan`}
           </h2>
         </div>
-        <p className="rounded-2xl bg-warning-container px-4 py-3 text-sm text-on-warning-container">
-          Database belum tersambung, jadi data ini <b>belum benar-benar tersimpan</b>. Isian sudah
-          lolos pemeriksaan dan siap disimpan begitu database tersambung.
-        </p>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-2 text-sm">
-          <dt className="text-on-surface-variant">Nama</dt>
-          <dd className="font-semibold">{hasil.nama.trim()}</dd>
-          <dt className="text-on-surface-variant">Jenis kelamin</dt>
-          <dd className="font-semibold capitalize">{hasil.jenisKelamin}</dd>
-          <dt className="text-on-surface-variant">Wilayah</dt>
-          <dd className="font-semibold">{hasil.wilayah}</dd>
-          <dt className="text-on-surface-variant">Kategori</dt>
-          <dd className="font-semibold">{labelKategori[kategoriPeserta(hasil.tanggalLahir)]}</dd>
-          <dt className="text-on-surface-variant">No HP</dt>
-          <dd className="font-semibold">{hasil.noHp || "–"}</dd>
-          {modeUbah && (
-            <>
-              <dt className="text-on-surface-variant">Status</dt>
-              <dd className="font-semibold">{hasil.status === "aktif" ? "Aktif" : "Tidak aktif"}</dd>
-            </>
-          )}
-        </dl>
+        {!modeUbah && (
+          <p className="text-sm text-on-surface-variant">Kartu peserta dengan kode QR baru sudah dibuat dan siap dicetak.</p>
+        )}
         <div className="flex flex-wrap gap-2">
           <md-filled-button href="/peserta">Kembali ke daftar</md-filled-button>
           {!modeUbah && (
-            <md-outlined-button type="button" onClick={tambahLagi}>
-              Tambah lagi
-            </md-outlined-button>
+            <>
+              <md-filled-tonal-button href={`/peserta/kartu?id=${hasil.id}`}>Cetak kartunya</md-filled-tonal-button>
+              <md-outlined-button type="button" onClick={tambahLagi}>
+                Tambah lagi
+              </md-outlined-button>
+            </>
           )}
         </div>
       </section>
@@ -133,7 +136,7 @@ export function FormPeserta({ peserta, hariIni }: { peserta?: Peserta; hariIni: 
           {!foto && inisial}
         </div>
         <div className="flex flex-col items-start gap-2">
-          <p className="text-sm text-on-surface-variant">Foto untuk kartu peserta. Boleh dikosongkan dulu.</p>
+          <p className="text-sm text-on-surface-variant">Foto untuk kartu peserta. Boleh dikosongkan dulu; penyimpanan foto menyusul.</p>
           <md-outlined-button type="button" onClick={() => inputFoto.current?.click()}>
             <Camera slot="icon" size={18} />
             {foto ? "Ganti foto" : "Pilih foto"}
@@ -200,7 +203,7 @@ export function FormPeserta({ peserta, hariIni }: { peserta?: Peserta; hariIni: 
                 · {hitungUmur(tanggalLahir)} tahun
               </>
             ) : (
-              "Kategori remaja / pra-nikah dihitung otomatis dari tanggal lahir."
+              "Kategori pra-remaja / remaja / pra-nikah dihitung otomatis dari tanggal lahir."
             )}
           </p>
         </div>
@@ -238,9 +241,18 @@ export function FormPeserta({ peserta, hariIni }: { peserta?: Peserta; hariIni: 
         </section>
       )}
 
+      {pesanUmum && (
+        <p role="alert" className="rounded-2xl bg-error-container px-4 py-3 text-sm text-on-error-container">
+          {pesanUmum}
+        </p>
+      )}
+
       <div className="flex justify-end gap-2">
         <md-text-button href="/peserta">Batal</md-text-button>
-        <md-filled-button type="submit">{modeUbah ? "Simpan perubahan" : "Simpan peserta"}</md-filled-button>
+        <md-filled-button type="submit" disabled={proses}>
+          {proses && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
+          {proses ? "Menyimpan..." : modeUbah ? "Simpan perubahan" : "Simpan peserta"}
+        </md-filled-button>
       </div>
     </form>
   );

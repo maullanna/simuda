@@ -1,9 +1,10 @@
-// Peran pengguna dan hak aksesnya (KONSEP bagian 3).
-// Tabel ini nanti juga dipakai requireRole() di server untuk menolak akses yang tidak berhak.
+// Peran pengguna (KONSEP bagian 3.1). Tabel hak akses per fitur ada di lib/hak-akses.ts.
+// Peran admin tidak ada di PERAN_PENGURUS, jadi tidak bisa dipilih dari form: hanya lewat `npm run jadikan-admin`.
 
-export type Peran = "kyai" | "wakil" | "ketua" | "sekretaris" | "bendahara" | "pengurus" | "petugas_scan";
+export type Peran = "admin" | "kyai" | "wakil" | "ketua" | "sekretaris" | "bendahara" | "pengurus" | "petugas_scan";
 
 export const labelPeran: Record<Peran, string> = {
+  admin: "Administrator",
   kyai: "Kyai",
   wakil: "Wakil",
   ketua: "Ketua",
@@ -16,22 +17,6 @@ export const labelPeran: Record<Peran, string> = {
 export const PERAN_PENGURUS: Peran[] = ["kyai", "wakil", "ketua", "sekretaris", "bendahara", "pengurus"];
 
 export type Pengurus = { id: string; nama: string; jabatan: string; wilayah: string; peran: Peran };
-
-// "–" = tidak ada akses. Kolom urut sesuai PERAN_TABEL.
-export const PERAN_TABEL: Peran[] = ["kyai", "wakil", "ketua", "sekretaris", "bendahara", "pengurus", "petugas_scan"];
-
-export const hakAkses: { fitur: string; akses: string[] }[] = [
-  { fitur: "Beranda pengurus", akses: ["Lihat", "Lihat", "Lihat", "Lihat", "Lihat", "Lihat", "–"] },
-  { fitur: "Data peserta", akses: ["Lihat", "Kelola", "Kelola", "Kelola", "Lihat", "Lihat", "–"] },
-  { fitur: "Scan kehadiran", akses: ["–", "Ya", "Ya", "Ya", "Ya", "Ya", "Ya"] },
-  { fitur: "Catat izin", akses: ["–", "Ya", "Ya", "Ya", "–", "Ya", "–"] },
-  { fitur: "Jadwal & materi", akses: ["Lihat", "Kelola", "Kelola", "Kelola", "Lihat", "Lihat", "–"] },
-  { fitur: "Rekap & perlu dihubungi", akses: ["Lihat", "Lihat", "Lihat", "Kelola", "Lihat", "Wilayahnya", "–"] },
-  { fitur: "Sodaqoh", akses: ["Lihat", "Lihat", "Lihat", "–", "Kelola", "–", "–"] },
-  { fitur: "Musyawarah", akses: ["Lihat", "Kelola", "Kelola", "Kelola", "Lihat", "Lihat", "–"] },
-  { fitur: "Masukan", akses: ["Lihat", "Lihat", "Lihat", "Lihat", "–", "–", "–"] },
-  { fitur: "Kepengurusan & akun", akses: ["Lihat", "Kelola", "Kelola", "–", "–", "–", "–"] },
-];
 
 export type GalatPengurus = Partial<Record<"nama" | "jabatan" | "wilayah" | "peran", string>>;
 

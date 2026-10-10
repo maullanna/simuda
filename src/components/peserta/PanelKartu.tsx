@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CreditCard, Printer, RefreshCw } from "lucide-react";
+import { CreditCard, LoaderCircle, Printer, RefreshCw } from "lucide-react";
+import { gantiKartu } from "@/app/(pengurus)/peserta/aksi";
 import { Dialog } from "@/components/Dialog";
 import { formatTanggal } from "@/lib/sesi";
 
@@ -23,6 +24,27 @@ export function PanelKartu({
   const [terbuka, setTerbuka] = useState(false);
   const [alasan, setAlasan] = useState("Hilang");
   const [diganti, setDiganti] = useState<string | null>(null); // alasan, setelah kartu diganti
+  const [proses, setProses] = useState(false);
+  const [galat, setGalat] = useState<string>();
+
+  // Memanggil Server Action: kartu lama dinonaktifkan dan kartu baru dibuat di database.
+  async function ganti() {
+    setProses(true);
+    setGalat(undefined);
+    try {
+      const hasil = await gantiKartu(pesertaId, alasan);
+      if (!hasil.ok) {
+        setGalat(hasil.pesan);
+        return;
+      }
+      setDiganti(alasan);
+      setTerbuka(false);
+    } catch {
+      setGalat("Gagal mengganti kartu. Periksa koneksi lalu coba lagi.");
+    } finally {
+      setProses(false);
+    }
+  }
 
   const urlCetak = `/peserta/kartu?id=${pesertaId}`;
 
@@ -43,12 +65,6 @@ export function PanelKartu({
           </p>
         </div>
       </div>
-
-      {diganti && (
-        <p className="rounded-2xl bg-warning-container px-4 py-3 text-sm text-on-warning-container">
-          Mode tampilan: kartu lama belum benar-benar dinonaktifkan karena database belum tersambung.
-        </p>
-      )}
 
       <div className="flex flex-wrap gap-2">
         <md-filled-tonal-button href={urlCetak}>
@@ -106,18 +122,12 @@ export function PanelKartu({
             <md-text-button type="button" onClick={() => setTerbuka(false)}>
               Batal
             </md-text-button>
-            <md-filled-button
-              type="button"
-              onClick={() => {
-                // Database belum tersambung. Nanti: Server Action menonaktifkan token lama
-                // (aktif = false, dinonaktifkan_at = sekarang) lalu membuat token baru dengan crypto.randomBytes.
-                setDiganti(alasan);
-                setTerbuka(false);
-              }}
-            >
-              Nonaktifkan & buat kartu baru
+            <md-filled-button type="button" onClick={ganti} disabled={proses}>
+              {proses && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
+              {proses ? "Memproses..." : "Nonaktifkan & buat kartu baru"}
             </md-filled-button>
           </div>
+          {galat && <p className="text-sm text-error">{galat}</p>}
           <p className="text-xs text-on-surface-variant">Tanggal hari ini ({formatTanggal(hariIni, { day: "numeric", month: "long" })}) dicatat sebagai tanggal kartu lama dinonaktifkan.</p>
         </div>
       </Dialog>

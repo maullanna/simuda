@@ -10,6 +10,7 @@ import { daftarPeserta, dataAbsensiContoh, dataMasukanContoh } from "@/lib/mock"
 import { bacaPeriode } from "@/lib/periode";
 import { tanggalHariIniWib } from "@/lib/peserta";
 import { formatTanggal } from "@/lib/sesi";
+import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Masukan · SIMUDA",
@@ -21,6 +22,7 @@ function ambilTeks(nilai: string | string[] | undefined): string | undefined {
 
 // Masukan peserta (KONSEP 5.10). Dilihat oleh Kyai, Wakil, Ketua, dan Sekretaris.
 export default async function MasukanPage(props: PageProps<"/masukan">) {
+  await requireRole("masukan", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi } = dataAbsensiContoh(hariIni);
