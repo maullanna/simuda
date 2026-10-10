@@ -1,0 +1,345 @@
+// Skema database SIMUDA, mengikuti KONSEP.md bagian 7.
+// Aturan: nama di kode camelCase, nama tabel/kolom di database snake_case (@@map / @map).
+// Tabel login (user, session, account, verification) ditambahkan bersama Better Auth di langkah berikutnya.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// ---------------------------------------------------------------------------
+// Pilihan tetap (enum)
+
+enum JenisKelamin {
+  putra
+  putri
+}
+
+enum Wilayah {
+  bendlay_2
+  bendlay_4
+}
+
+enum WilayahPengurus {
+  pimpinan
+  bendlay_2
+  bendlay_4
+}
+
+enum StatusPeserta {
+  aktif
+  tidak_aktif
+}
+
+enum Sasaran {
+  remaja
+  pra_nikah
+  gabungan
+}
+
+enum StatusSesi {
+  terjadwal
+  berlangsung
+  selesai
+  batal
+}
+
+enum StatusKehadiran {
+  hadir
+  izin
+  alpa
+}
+
+enum MetodeKehadiran {
+  qr
+  manual
+  izin
+}
+
+enum TipeLampiran {
+  foto
+  pdf
+}
+
+enum Peran {
+  kyai
+  wakil
+  ketua
+  sekretaris
+  bendahara
+  pengurus
+  petugas_scan
+}
+
+enum JenisSodaqoh {
+  pemasukan
+  pengeluaran
+}
+
+enum StatusMusyawarah {
+  terjadwal
+  selesai
+}
+
+enum StatusTindakLanjut {
+  belum
+  berjalan
+  selesai
+}
+
+// ---------------------------------------------------------------------------
+// Peserta dan kartu
+
+// Kategori remaja/pra-nikah TIDAK disimpan: selalu dihitung dari tanggalLahir.
+// Peserta tidak pernah dihapus, cukup status = tidak_aktif.
+model Peserta {
+  id               String        @id @default(cuid())
+  nama             String
+  jenisKelamin     JenisKelamin  @map("jenis_kelamin")
+  wilayah          Wilayah
+  tanggalLahir     DateTime      @map("tanggal_lahir") @db.Date
+  noHp             String?       @map("no_hp")
+  fotoUrl          String?       @map("foto_url")
+  status           StatusPeserta @default(aktif)
+  tanggalBergabung DateTime      @default(now()) @map("tanggal_bergabung") @db.Date
+  userId           String?       @unique @map("user_id") // akun login peserta (tahap 2)
+  dibuatAt         DateTime      @default(now()) @map("dibuat_at")
+  diubahAt         DateTime      @updatedAt @map("diubah_at")
+
+  kartu       Kartu[]
+  kehadiran   Kehadiran[]
+  masukan     Masukan[]
+  petugasScan Pengurus?   @relation("PetugasScanPeserta")
+
+  @@index([status, jenisKelamin])
+  @@map("peserta")
+}
+
+// Token QR acak (crypto.randomBytes, minimal 128 bit) tanpa data pribadi.
+// Kartu hilang: aktif = false + dinonaktifkanAt diisi, lalu dibuat kartu baru.
+model Kartu {
+  id              String    @id @default(cuid())
+  pesertaId       String    @map("peserta_id")
+  token           String    @unique
+  aktif           Boolean   @default(true)
+  alasanNonaktif  String?   @map("alasan_nonaktif")
+  dibuatAt        DateTime  @default(now()) @map("dibuat_at")
+  dinonaktifkanAt DateTime? @map("dinonaktifkan_at")
+
+  peserta Peserta @relation(fields: [pesertaId], references: [id])
+
+  @@index([pesertaId, aktif])
+  @@map("kartu")
+}
+
+// ---------------------------------------------------------------------------
+// Pengajian dan kehadiran
+
+model Pemateri {
+  id         String  @id @default(cuid())
+  nama       String
+  keterangan String?
+
+  sesi SesiPengajian[]
+
+  @@map("pemateri")
+}
+
+model SesiPengajian {
+  id           String       @id @default(cuid())
+  tanggal      DateTime     @db.Date
+  jamMulai     String       @map("jam_mulai") // "19:30"
+  jenisKelamin JenisKelamin @map("jenis_kelamin")
+  sasaran      Sasaran
+  pemateriId   String?      @map("pemateri_id")
+  materi       String?
+  catatan      String?
+  status       StatusSesi   @default(terjadwal)
+  dibuatAt     DateTime     @default(now()) @map("dibuat_at")
+  diubahAt     DateTime     @updatedAt @map("diubah_at")
+
+  pemateri  Pemateri?   @relation(fields: [pemateriId], references: [id])
+  kehadiran Kehadiran[]
+  lampiran  Lampiran[]
+  sodaqoh   Sodaqoh[]
+  masukan   Masukan[]
+
+  @@index([tanggal])
+  @@map("sesi_pengajian")
+}
+
+// Satu peserta hanya satu catatan per sesi. Izin juga disimpan di sini (status = izin).
+model Kehadiran {
+  id          String          @id @default(cuid())
+  sesiId      String          @map("sesi_id")
+  pesertaId   String          @map("peserta_id")
+  status      StatusKehadiran
+  metode      MetodeKehadiran
+  keterangan  String?
+  dicatatOleh String          @map("dicatat_oleh") // id user yang mencatat
+  waktu       DateTime        @default(now())
+
+  sesi    SesiPengajian @relation(fields: [sesiId], references: [id])
+  peserta Peserta       @relation(fields: [pesertaId], references: [id])
+
+  @@unique([sesiId, pesertaId])
+  @@index([pesertaId])
+  @@map("kehadiran")
+}
+
+// File disimpan di storage; database hanya menyimpan alamatnya.
+model Lampiran {
+  id       String       @id @default(cuid())
+  sesiId   String       @map("sesi_id")
+  url      String
+  namaFile String       @map("nama_file")
+  tipe     TipeLampiran
+  dibuatAt DateTime     @default(now()) @map("dibuat_at")
+
+  sesi SesiPengajian @relation(fields: [sesiId], references: [id])
+
+  @@map("lampiran")
+}
+
+// ---------------------------------------------------------------------------
+// Kepengurusan
+
+// Pengurus dan petugas scan. Petugas scan adalah peserta (pesertaId diisi) dengan peran petugas_scan.
+model Pengurus {
+  id        String          @id @default(cuid())
+  userId    String?         @unique @map("user_id") // akun login (Better Auth)
+  pesertaId String?         @unique @map("peserta_id")
+  nama      String
+  jabatan   String
+  wilayah   WilayahPengurus
+  peran     Peran
+  noHp      String?         @map("no_hp")
+  aktif     Boolean         @default(true)
+  dibuatAt  DateTime        @default(now()) @map("dibuat_at")
+  diubahAt  DateTime        @updatedAt @map("diubah_at")
+
+  peserta           Peserta?       @relation("PetugasScanPeserta", fields: [pesertaId], references: [id])
+  penghitung1       Sodaqoh[]      @relation("Penghitung1")
+  penghitung2       Sodaqoh[]      @relation("Penghitung2")
+  notulisMusyawarah Musyawarah[]
+  tindakLanjut      TindakLanjut[]
+
+  @@map("pengurus")
+}
+
+// ---------------------------------------------------------------------------
+// Sodaqoh: tidak pernah dihapus. Setiap perubahan dicatat di AuditLog beserta alasan.
+
+model Sodaqoh {
+  id            String       @id @default(cuid())
+  tanggal       DateTime     @db.Date
+  sesiId        String?      @map("sesi_id")
+  jenis         JenisSodaqoh
+  jumlah        Int // rupiah, bilangan bulat
+  keterangan    String
+  penghitung1Id String?      @map("penghitung_1_id")
+  penghitung2Id String?      @map("penghitung_2_id")
+  buktiUrl      String?      @map("bukti_url")
+  dicatatOleh   String       @map("dicatat_oleh")
+  dibuatAt      DateTime     @default(now()) @map("dibuat_at")
+  diubahAt      DateTime     @updatedAt @map("diubah_at")
+
+  sesi        SesiPengajian? @relation(fields: [sesiId], references: [id])
+  penghitung1 Pengurus?      @relation("Penghitung1", fields: [penghitung1Id], references: [id])
+  penghitung2 Pengurus?      @relation("Penghitung2", fields: [penghitung2Id], references: [id])
+
+  @@index([tanggal])
+  @@map("sodaqoh")
+}
+
+model AuditLog {
+  id       String   @id @default(cuid())
+  userId   String   @map("user_id")
+  tabel    String
+  recordId String   @map("record_id")
+  aksi     String // "buat" / "ubah"
+  dataLama Json?    @map("data_lama")
+  dataBaru Json?    @map("data_baru")
+  alasan   String?
+  waktu    DateTime @default(now())
+
+  @@index([tabel, recordId])
+  @@map("audit_log")
+}
+
+// ---------------------------------------------------------------------------
+// Musyawarah, masukan
+
+model Musyawarah {
+  id        String           @id @default(cuid())
+  tanggal   DateTime         @db.Date
+  jam       String
+  lokasi    String
+  agenda    String[]
+  hasil     String[]
+  notulisId String?          @map("notulis_id")
+  status    StatusMusyawarah @default(terjadwal)
+  dibuatAt  DateTime         @default(now()) @map("dibuat_at")
+
+  notulis      Pengurus?      @relation(fields: [notulisId], references: [id])
+  tindakLanjut TindakLanjut[]
+
+  @@map("musyawarah")
+}
+
+model TindakLanjut {
+  id           String             @id @default(cuid())
+  musyawarahId String             @map("musyawarah_id")
+  tugas        String
+  picId        String             @map("pic_id")
+  tenggat      DateTime           @db.Date
+  status       StatusTindakLanjut @default(belum)
+
+  musyawarah Musyawarah @relation(fields: [musyawarahId], references: [id])
+  pic        Pengurus   @relation(fields: [picId], references: [id])
+
+  @@map("tindak_lanjut")
+}
+
+// pesertaId kosong = masukan tanpa nama (identitas benar-benar tidak disimpan).
+model Masukan {
+  id        String   @id @default(cuid())
+  sesiId    String?  @map("sesi_id")
+  pesertaId String?  @map("peserta_id")
+  isi       String
+  dibuatAt  DateTime @default(now()) @map("dibuat_at")
+
+  sesi    SesiPengajian? @relation(fields: [sesiId], references: [id])
+  peserta Peserta?       @relation(fields: [pesertaId], references: [id])
+
+  @@map("masukan")
+}
+
+// ---------------------------------------------------------------------------
+// Notifikasi (tahap 3)
+
+model NotifikasiLog {
+  id        String    @id @default(cuid())
+  penerima  String
+  kanal     String // "whatsapp" / "push"
+  jenis     String
+  isi       String
+  status    String
+  dikirimAt DateTime? @map("dikirim_at")
+
+  @@map("notifikasi_log")
+}
+
+model PushSubscription {
+  id       String @id @default(cuid())
+  userId   String @map("user_id")
+  endpoint String @unique
+  p256dh   String
+  auth     String
+
+  @@map("push_subscription")
+}

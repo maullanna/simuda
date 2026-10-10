@@ -27,14 +27,12 @@ export function TombolTema({ className = "", denganLabel }: { className?: string
       document.cookie = `tema=${berikut}; path=/; max-age=31536000; samesite=lax`;
     }
 
-    // Browser lama atau pengguna yang meminta gerak dikurangi: langsung ganti tanpa animasi.
     const kurangiGerak = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     if (!document.startViewTransition || kurangiGerak) {
       terapkan();
       return;
     }
 
-    // Tampilan baru "terbuka" melingkar dari tengah tombol sampai menutupi layar.
     const kotak = e.currentTarget.getBoundingClientRect();
     const x = kotak.left + kotak.width / 2;
     const y = kotak.top + kotak.height / 2;

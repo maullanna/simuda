@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { connection } from "next/server";
 import { Clock, ScanLine, User } from "lucide-react";
 import { ChipJenisKelamin } from "@/components/ChipJenisKelamin";
@@ -91,6 +92,9 @@ function KartuSesiHariIni({
         </md-filled-button>
         <TombolInputManual judulSesi={judulSesi} peserta={peserta} />
         <TombolTutupSesi judulSesi={judulSesi} peserta={peserta} />
+        <Link href={`/absensi/${sesi.id}`} className="inline-flex h-10 items-center px-3 text-sm font-bold text-primary hover:underline">
+          Lihat daftar hadir
+        </Link>
       </div>
     </article>
   );
@@ -223,7 +227,9 @@ export default async function AbsensiPage(props: PageProps<"/absensi">) {
                 return (
                   <tr key={s.id} className="border-t border-outline-variant/60 transition-colors hover:bg-surface-mid">
                     <td className="whitespace-nowrap px-4 py-3 font-semibold lg:px-6">
-                      {formatTanggal(s.tanggal, { weekday: "short", day: "numeric", month: "short" })}
+                      <Link href={`/absensi/${s.id}`} className="hover:underline">
+                        {formatTanggal(s.tanggal, { weekday: "short", day: "numeric", month: "short" })}
+                      </Link>
                     </td>
                     <td className="px-4 py-3">
                       <div className="flex flex-wrap items-center gap-1.5">

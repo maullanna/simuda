@@ -296,7 +296,8 @@ function tokenContoh(id: string): string {
   return [0, 1, 2, 3].map((i) => Math.floor(acakTetap(`${id}-${i}`) * 2 ** 32).toString(16).padStart(8, "0")).join("");
 }
 
-export const kartuContoh = daftarPeserta.map((p) => ({ token: tokenContoh(p.id), pesertaId: p.id }));
+// dibuat: tanggal kartu dicetak (contoh: semua dicetak bersamaan saat SIMUDA mulai dipakai).
+export const kartuContoh = daftarPeserta.map((p) => ({ token: tokenContoh(p.id), pesertaId: p.id, dibuat: "2026-09-24" }));
 
 // Kontak yang dicetak di belakang kartu ("kartu hilang? hubungi...").
 // Masih contoh: siapa dan nomor mana yang dipakai perlu diputuskan pengurus.

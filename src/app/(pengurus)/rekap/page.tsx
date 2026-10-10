@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { connection } from "next/server";
 import { CalendarCheck, HandHeart, MessageCircle, PhoneCall, UserCheck } from "lucide-react";
 import { GrafikKehadiran } from "@/components/beranda/GrafikKehadiran";
@@ -348,7 +349,9 @@ export default async function RekapPage(props: PageProps<"/rekap">) {
                     return (
                       <tr key={s.id} className="border-t border-outline-variant/60">
                         <td className="whitespace-nowrap py-2.5 pr-3 font-semibold">
-                          {formatTanggal(s.tanggal, { weekday: "short", day: "numeric", month: "short" })}
+                          <Link href={`/absensi/${s.id}`} className="hover:underline">
+                            {formatTanggal(s.tanggal, { weekday: "short", day: "numeric", month: "short" })}
+                          </Link>
                         </td>
                         <td className="px-3 py-2.5">
                           <div className="flex flex-wrap items-center gap-1.5">

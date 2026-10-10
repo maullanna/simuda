@@ -107,8 +107,7 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
-          {/* Impor Excel dikerjakan di langkah tersendiri */}
-          <md-outlined-button disabled>Impor Excel</md-outlined-button>
+          <md-outlined-button href="/peserta/impor">Impor Excel</md-outlined-button>
           <md-filled-tonal-button href="/peserta/kartu">Cetak kartu</md-filled-tonal-button>
           <md-filled-button href="/peserta/tambah">Tambah peserta</md-filled-button>
         </div>
