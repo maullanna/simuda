@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { NavbarPengurus } from "@/components/NavbarPengurus";
-import { SidebarPengurus } from "@/components/SidebarPengurus";
+import { SidebarPengurus, type InfoPengguna } from "@/components/SidebarPengurus";
 
 // Kerangka semua halaman pengurus: sidebar di kiri, navbar di atas, isi halaman di tengah.
 // State sidebar disimpan di sini karena dipakai dua komponen sekaligus:
@@ -10,10 +10,12 @@ import { SidebarPengurus } from "@/components/SidebarPengurus";
 export function KerangkaPengurus({
   ciutAwal,
   hariIni,
+  pengguna,
   children,
 }: {
   ciutAwal: boolean;
   hariIni: string;
+  pengguna: InfoPengguna;
   children: React.ReactNode;
 }) {
   const [ciut, setCiut] = useState(ciutAwal);
@@ -39,7 +41,7 @@ export function KerangkaPengurus({
 
   return (
     <div className="min-h-screen lg:flex">
-      <SidebarPengurus ciut={ciut} laciTerbuka={laciTerbuka} tutupLaci={() => setLaciTerbuka(false)} />
+      <SidebarPengurus ciut={ciut} laciTerbuka={laciTerbuka} tutupLaci={() => setLaciTerbuka(false)} pengguna={pengguna} />
       <div className="flex min-w-0 flex-1 flex-col">
         <NavbarPengurus
           ciut={ciut}

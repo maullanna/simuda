@@ -8,7 +8,8 @@ import { HeroBeranda } from "@/components/beranda/HeroBeranda";
 import { KalenderPekan } from "@/components/beranda/KalenderPekan";
 import { KartuSaldo } from "@/components/beranda/KartuSaldo";
 import { BarisStat, KotakStat } from "@/components/beranda/KotakStat";
-import { daftarPeserta, dataAbsensiContoh, dataSodaqohContoh, penggunaAktif } from "@/lib/mock";
+import { daftarPeserta, dataAbsensiContoh, dataSodaqohContoh } from "@/lib/mock";
+import { requireRole } from "@/lib/pengguna";
 import { akhirBulan, awalBulan, bacaPeriode } from "@/lib/periode";
 import { kategoriPeserta, tanggalHariIniWib } from "@/lib/peserta";
 import { ringkasSodaqoh } from "@/lib/sodaqoh";
@@ -27,6 +28,8 @@ export const metadata: Metadata = {
 
 export default async function DashboardPage(props: PageProps<"/dashboard">) {
   // Beranda menampilkan data hari ini, jadi dibuat saat dibuka, bukan saat build.
+  // Aturan keamanan no. 1: halaman pengurus selalu memeriksa sesi dan peran sendiri.
+  const pengguna = await requireRole();
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
@@ -105,7 +108,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   return (
     <div className="flex flex-col gap-4">
       <HeroBeranda
-        namaDepan={penggunaAktif.nama.split(" ")[0]}
+        namaDepan={pengguna.nama.split(" ")[0]}
         tanggal={formatTanggal(hariIni)}
         hadirHariIni={hadirHariIni}
         sasaranHariIni={sasaranHariIni}

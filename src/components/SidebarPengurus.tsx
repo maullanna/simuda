@@ -4,8 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { X } from "lucide-react";
 import { LabelMelayang } from "@/components/LabelMelayang";
+import { TombolKeluar } from "@/components/TombolKeluar";
 import { kelompokMenu, menuAktif } from "@/lib/menu";
-import { penggunaAktif } from "@/lib/mock";
+
+// Data pengguna yang sedang masuk, dikirim dari layout (server) yang sudah memeriksa sesinya.
+export type InfoPengguna = { nama: string; jabatan: string; wilayah: string };
 
 // "use client" karena butuh usePathname untuk menandai menu yang sedang dibuka.
 // State lebar/ciut dan laci HP disimpan di KerangkaPengurus, karena navbar juga memakainya.
@@ -28,7 +31,7 @@ function Logo({ ciut }: { ciut: boolean }) {
   );
 }
 
-function IsiSidebar({ ciut, saatNavigasi }: { ciut: boolean; saatNavigasi?: () => void }) {
+function IsiSidebar({ ciut, pengguna, saatNavigasi }: { ciut: boolean; pengguna: InfoPengguna; saatNavigasi?: () => void }) {
   const pathname = usePathname();
 
   return (
@@ -75,16 +78,22 @@ function IsiSidebar({ ciut, saatNavigasi }: { ciut: boolean; saatNavigasi?: () =
       </nav>
 
       {ciut ? (
-        <div className="group relative mx-auto mt-auto grid size-11 place-items-center rounded-full bg-surface-mid text-sm font-bold">
-          {penggunaAktif.nama.charAt(0)}
-          <LabelMelayang teks={`${penggunaAktif.nama} · ${penggunaAktif.jabatan}`} />
+        <div className="mt-auto flex flex-col items-center gap-2">
+          <div className="group relative grid size-11 place-items-center rounded-full bg-surface-mid text-sm font-bold">
+            {pengguna.nama.charAt(0)}
+            <LabelMelayang teks={`${pengguna.nama} · ${pengguna.jabatan}`} />
+          </div>
+          <TombolKeluar />
         </div>
       ) : (
-        <div className="mt-auto whitespace-nowrap rounded-3xl bg-surface-mid px-4 py-3">
-          <p className="text-sm font-bold">{penggunaAktif.nama}</p>
-          <p className="text-xs text-on-surface-variant">
-            {penggunaAktif.jabatan} · {penggunaAktif.wilayah}
-          </p>
+        <div className="mt-auto flex items-center gap-2 whitespace-nowrap rounded-3xl bg-surface-mid py-3 pl-4 pr-2">
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-bold">{pengguna.nama}</p>
+            <p className="truncate text-xs text-on-surface-variant">
+              {pengguna.jabatan} · {pengguna.wilayah}
+            </p>
+          </div>
+          <TombolKeluar posisiLabel="bawah" />
         </div>
       )}
     </>
@@ -95,10 +104,12 @@ export function SidebarPengurus({
   ciut,
   laciTerbuka,
   tutupLaci,
+  pengguna,
 }: {
   ciut: boolean;
   laciTerbuka: boolean;
   tutupLaci: () => void;
+  pengguna: InfoPengguna;
 }) {
   return (
     <>
@@ -118,7 +129,7 @@ export function SidebarPengurus({
                 <X size={22} />
               </button>
             </div>
-            <IsiSidebar ciut={false} saatNavigasi={tutupLaci} />
+            <IsiSidebar ciut={false} pengguna={pengguna} saatNavigasi={tutupLaci} />
           </aside>
         </div>
       )}
@@ -130,7 +141,7 @@ export function SidebarPengurus({
         }`}
       >
         <Logo ciut={ciut} />
-        <IsiSidebar ciut={ciut} />
+        <IsiSidebar ciut={ciut} pengguna={pengguna} />
       </aside>
     </>
   );

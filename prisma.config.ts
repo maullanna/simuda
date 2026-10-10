@@ -7,6 +7,8 @@ export default defineConfig({
   schema: "prisma/schema.prisma",
   migrations: {
     path: "prisma/migrations",
+    // `npx prisma db seed` menjalankan perintah ini (tsx = menjalankan file TypeScript langsung).
+    seed: "tsx prisma/seed.ts",
   },
   // Alamat database diambil dari file .env, tidak pernah ditulis di kode.
   // Migrasi memakai koneksi langsung (DIRECT_URL); aplikasi memakai DATABASE_URL (pooled) di src/lib/db.ts.

@@ -16,6 +16,7 @@ import {
   UserRoundCheck,
 } from "lucide-react";
 import { TombolInputManual, TombolTutupSesi } from "@/components/absensi/AksiAbsensi";
+import { TombolKeluar } from "@/components/TombolKeluar";
 import { TombolTema } from "@/components/TombolTema";
 import type { JenisKelamin } from "@/lib/peserta";
 import type { PesertaSesi } from "@/lib/sesi";
@@ -355,6 +356,7 @@ function Kerangka({
           </md-text-button>
         )}
         <TombolTema className="grid size-10 place-items-center rounded-full text-on-surface-variant hover:bg-surface-highest" />
+        <TombolKeluar posisiLabel="bawah" />
       </header>
       {children}
     </div>

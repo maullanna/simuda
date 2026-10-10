@@ -3,6 +3,7 @@ import { connection } from "next/server";
 import { LayarScanner, type KartuScan, type SesiScan } from "@/components/scan/LayarScanner";
 import { daftarPeserta, dataAbsensiContoh, kartuContoh } from "@/lib/mock";
 import { labelJenisKelamin, tanggalHariIniWib } from "@/lib/peserta";
+import { requireRole } from "@/lib/pengguna";
 import { daftarPesertaSesi, formatTanggal, labelSasaran } from "@/lib/sesi";
 
 export const metadata: Metadata = {
@@ -12,6 +13,8 @@ export const metadata: Metadata = {
 // Layar petugas scan (KONSEP 4.2). Sengaja di luar folder (pengurus), jadi tampil
 // penuh tanpa sidebar: petugas scan cukup melihat kamera dan hitungan hadir.
 export default async function ScanPage(props: PageProps<"/scan">) {
+  // Scan kehadiran boleh oleh semua pengurus kecuali Kyai, dan oleh petugas scan (KONSEP bagian 3).
+  await requireRole(["wakil", "ketua", "sekretaris", "bendahara", "pengurus", "petugas_scan"]);
   await connection();
   const hariIni = tanggalHariIniWib();
   const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
