@@ -4,9 +4,9 @@ import { z } from "zod";
 export const skemaPengurus = z.object({
   nama: z.string().trim().min(3, { error: "Nama minimal 3 huruf" }).max(100, { error: "Nama terlalu panjang" }),
   jabatan: z.string().trim().min(3, { error: "Isi jabatan, contoh: Seksi Acara" }).max(60, { error: "Jabatan terlalu panjang" }),
-  wilayah: z.enum(["Pimpinan", "Bendlay 2", "Bendlay 4"], { error: "Pilih wilayah" }),
-  // Admin dan petugas scan sengaja tidak bisa dipilih dari form ini.
-  peran: z.enum(["kyai", "wakil", "ketua", "sekretaris", "bendahara", "pengurus"], { error: "Pilih peran di sistem" }),
+  wilayah: z.enum(["Pimpinan", "Bendlay 2", "Bendlay 4"], { error: "Pilih kelompok" }),
+  // Hak akses mengikuti level (KONSEP 3.1). Level dicek ada/tidaknya di server.
+  levelId: z.string().min(1, { error: "Pilih level" }),
 });
 
 export const skemaKataSandi = z

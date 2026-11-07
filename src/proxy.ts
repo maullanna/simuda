@@ -28,5 +28,6 @@ export const config = {
     "/kepengurusan/:path*",
     "/scan/:path*",
     "/akun/:path*",
+    "/level-pengguna/:path*",
   ],
 };

@@ -180,7 +180,7 @@ export function FormHasilMusyawarah({
             setGalat((g) => ({ ...g, hasil: undefined }));
           }}
           rows={4}
-          placeholder={"Contoh:\nAbsensi kartu QR dipakai mulai bulan depan.\nPeringatan Maulid diadakan bersama Bendlay 4."}
+          placeholder={"Contoh:\nAbsensi kartu QR dipakai mulai bulan depan.\nPengajian gabungan diadakan bersama Bendlay 4."}
           className={`rounded-xl border bg-transparent px-3 py-2.5 text-sm outline-none placeholder:text-on-surface-variant focus:border-2 focus:border-primary ${galat.hasil ? "border-error" : "border-outline"}`}
         />
         {galat.hasil && <span className="px-1 text-xs text-error">{galat.hasil}</span>}

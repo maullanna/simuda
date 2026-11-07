@@ -73,7 +73,7 @@ export function periksaIsianPeserta(isian: IsianPeserta, hariIni: string): Galat
   }
 
   if (isian.wilayah !== "Bendlay 2" && isian.wilayah !== "Bendlay 4") {
-    galat.wilayah = "Pilih wilayah";
+    galat.wilayah = "Pilih kelompok";
   }
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(isian.tanggalLahir)) galat.tanggalLahir = "Isi tanggal lahir";

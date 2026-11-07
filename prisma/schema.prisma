@@ -66,15 +66,29 @@ enum TipeLampiran {
   pdf
 }
 
-enum Peran {
-  admin // Administrator: mengelola seluruh aplikasi
-  kyai
-  wakil
-  ketua
-  sekretaris
-  bendahara
-  pengurus
-  petugas_scan
+enum GolonganDarah {
+  A
+  B
+  AB
+  O
+}
+
+enum StatusNikah {
+  belum_menikah
+  menikah
+}
+
+enum JenjangPendidikan {
+  sd
+  smp
+  sma
+  smk
+  d3
+  d4
+  s1
+  s2
+  s3
+  lainnya
 }
 
 enum JenisSodaqoh {
@@ -113,10 +127,11 @@ model Peserta {
   diubahAt         DateTime      @updatedAt @map("diubah_at")
 
   kartu       Kartu[]
+  biodata     BiodataPeserta?
   kehadiran   Kehadiran[]
   masukan     Masukan[]
-  petugasScan Pengurus?   @relation("PetugasScanPeserta")
-  user        User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  petugasScan Pengurus?       @relation("PetugasScanPeserta")
+  user        User?           @relation(fields: [userId], references: [id], onDelete: SetNull)
 
   @@index([status, jenisKelamin])
   @@map("peserta")
@@ -124,6 +139,46 @@ model Peserta {
 
 // Token QR acak (crypto.randomBytes, minimal 128 bit) tanpa data pribadi.
 // Kartu hilang: aktif = false + dinonaktifkanAt diisi, lalu dibuat kartu baru.
+// Biodata muda/i untuk Tim PnKB (KONSEP 5.1b). Terpisah dari peserta karena sensitif:
+// hanya dimuat untuk Admin/Wakil/Ketua/Sekretaris. Semua kolom boleh kosong.
+model BiodataPeserta {
+  pesertaId         String             @id @map("peserta_id")
+  namaAyah          String?            @map("nama_ayah") // untuk "bin/binti"
+  tempatLahir       String?            @map("tempat_lahir")
+  anakKe            Int?               @map("anak_ke")
+  jumlahSaudara     Int?               @map("jumlah_saudara")
+  suku              String?
+  tinggiCm          Int?               @map("tinggi_cm")
+  beratKg           Int?               @map("berat_kg")
+  golonganDarah     GolonganDarah?     @map("golongan_darah")
+  statusNikah       StatusNikah?       @map("status_nikah")
+  pendidikanJenjang JenjangPendidikan? @map("pendidikan_jenjang")
+  pendidikanJurusan String?            @map("pendidikan_jurusan") // jurusan atau keterangan
+  skill             String?
+  pekerjaan         String?
+  hobi              String?
+  dapukan           String?
+  diubahAt          DateTime           @updatedAt @map("diubah_at")
+
+  peserta Peserta @relation(fields: [pesertaId], references: [id])
+
+  @@map("biodata_peserta")
+}
+
+// Data per kelompok (KONSEP 5.1b): diisi sekali, ikut ke profil semua peserta di kelompok itu.
+model DataKelompok {
+  wilayah         Wilayah  @id
+  desa            String?
+  daerah          String?
+  kipok           String? // Kyai Kelompok
+  timPnkbKelompok String?  @map("tim_pnkb_kelompok")
+  timPnkbDesa     String?  @map("tim_pnkb_desa")
+  timPnkbDaerah   String?  @map("tim_pnkb_daerah")
+  diubahAt        DateTime @updatedAt @map("diubah_at")
+
+  @@map("data_kelompok")
+}
+
 model Kartu {
   id              String    @id @default(cuid())
   pesertaId       String    @map("peserta_id")
@@ -143,9 +198,13 @@ model Kartu {
 // Pengajian dan kehadiran
 
 model Pemateri {
-  id         String  @id @default(cuid())
-  nama       String
-  keterangan String?
+  id            String    @id @default(cuid())
+  nama          String
+  keterangan    String?
+  // Suspend (KONSEP 3.3): terisi = disuspend, tidak dihitung dan tidak tampil di daftar biasa.
+  disuspendAt   DateTime? @map("disuspend_at")
+  disuspendOleh String?   @map("disuspend_oleh") // id user yang men-suspend
+  alasanSuspend String?   @map("alasan_suspend")
 
   sesi SesiPengajian[]
 
@@ -177,14 +236,18 @@ model SesiPengajian {
 
 // Satu peserta hanya satu catatan per sesi. Izin juga disimpan di sini (status = izin).
 model Kehadiran {
-  id          String          @id @default(cuid())
-  sesiId      String          @map("sesi_id")
-  pesertaId   String          @map("peserta_id")
-  status      StatusKehadiran
-  metode      MetodeKehadiran
-  keterangan  String?
-  dicatatOleh String          @map("dicatat_oleh") // id user yang mencatat
-  waktu       DateTime        @default(now())
+  id            String          @id @default(cuid())
+  sesiId        String          @map("sesi_id")
+  pesertaId     String          @map("peserta_id")
+  status        StatusKehadiran
+  metode        MetodeKehadiran
+  keterangan    String?
+  dicatatOleh   String          @map("dicatat_oleh") // id user yang mencatat
+  waktu         DateTime        @default(now())
+  // Suspend (KONSEP 3.3): terisi = disuspend, tidak dihitung dan tidak tampil di daftar biasa.
+  disuspendAt   DateTime?       @map("disuspend_at")
+  disuspendOleh String?         @map("disuspend_oleh") // id user yang men-suspend
+  alasanSuspend String?         @map("alasan_suspend")
 
   sesi    SesiPengajian @relation(fields: [sesiId], references: [id])
   peserta Peserta       @relation(fields: [pesertaId], references: [id])
@@ -196,12 +259,16 @@ model Kehadiran {
 
 // File disimpan di storage; database hanya menyimpan alamatnya.
 model Lampiran {
-  id       String       @id @default(cuid())
-  sesiId   String       @map("sesi_id")
-  url      String
-  namaFile String       @map("nama_file")
-  tipe     TipeLampiran
-  dibuatAt DateTime     @default(now()) @map("dibuat_at")
+  id            String       @id @default(cuid())
+  sesiId        String       @map("sesi_id")
+  url           String
+  namaFile      String       @map("nama_file")
+  tipe          TipeLampiran
+  dibuatAt      DateTime     @default(now()) @map("dibuat_at")
+  // Suspend (KONSEP 3.3): terisi = disuspend, tidak dihitung dan tidak tampil di daftar biasa.
+  disuspendAt   DateTime?    @map("disuspend_at")
+  disuspendOleh String?      @map("disuspend_oleh") // id user yang men-suspend
+  alasanSuspend String?      @map("alasan_suspend")
 
   sesi SesiPengajian @relation(fields: [sesiId], references: [id])
 
@@ -211,6 +278,23 @@ model Lampiran {
 // ---------------------------------------------------------------------------
 // Kepengurusan
 
+// Level pengguna (KONSEP 3.1): hak akses per fitur hasil centang Administrator.
+// kode terisi untuk level bawaan (admin, kyai, ..., petugas_scan). akses_penuh = Administrator (terkunci).
+model LevelPengguna {
+  id         String   @id @default(cuid())
+  kode       String?  @unique
+  nama       String   @unique
+  keterangan String?
+  hak        Json     @default("{}") // { fitur: ["lihat", "tambah", ...] }
+  aksesPenuh Boolean  @default(false) @map("akses_penuh")
+  dibuatAt   DateTime @default(now()) @map("dibuat_at")
+  diubahAt   DateTime @updatedAt @map("diubah_at")
+
+  pengurus Pengurus[]
+
+  @@map("level_pengguna")
+}
+
 // Pengurus dan petugas scan. Petugas scan adalah peserta (pesertaId diisi) dengan peran petugas_scan.
 model Pengurus {
   id        String          @id @default(cuid())
@@ -219,12 +303,13 @@ model Pengurus {
   nama      String
   jabatan   String
   wilayah   WilayahPengurus
-  peran     Peran
+  levelId   String          @map("level_id") // hak akses mengikuti level (KONSEP 3.1)
   noHp      String?         @map("no_hp")
   aktif     Boolean         @default(true)
   dibuatAt  DateTime        @default(now()) @map("dibuat_at")
   diubahAt  DateTime        @updatedAt @map("diubah_at")
 
+  level             LevelPengguna  @relation(fields: [levelId], references: [id])
   peserta           Peserta?       @relation("PetugasScanPeserta", fields: [pesertaId], references: [id])
   user              User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
   penghitung1       Sodaqoh[]      @relation("Penghitung1")
@@ -251,6 +336,10 @@ model Sodaqoh {
   dicatatOleh   String       @map("dicatat_oleh")
   dibuatAt      DateTime     @default(now()) @map("dibuat_at")
   diubahAt      DateTime     @updatedAt @map("diubah_at")
+  // Suspend (KONSEP 3.3): terisi = disuspend, tidak dihitung dan tidak tampil di daftar biasa.
+  disuspendAt   DateTime?    @map("disuspend_at")
+  disuspendOleh String?      @map("disuspend_oleh") // id user yang men-suspend
+  alasanSuspend String?      @map("alasan_suspend")
 
   sesi        SesiPengajian? @relation(fields: [sesiId], references: [id])
   penghitung1 Pengurus?      @relation("Penghitung1", fields: [penghitung1Id], references: [id])
@@ -265,7 +354,7 @@ model AuditLog {
   userId   String   @map("user_id")
   tabel    String
   recordId String   @map("record_id")
-  aksi     String // "buat" / "ubah"
+  aksi     String // "buat" / "ubah" / "suspend" / "pulihkan" / "hapus"
   dataLama Json?    @map("data_lama")
   dataBaru Json?    @map("data_baru")
   alasan   String?
@@ -279,15 +368,19 @@ model AuditLog {
 // Musyawarah, masukan
 
 model Musyawarah {
-  id        String           @id @default(cuid())
-  tanggal   DateTime         @db.Date
-  jam       String
-  lokasi    String
-  agenda    String[]
-  hasil     String[]
-  notulisId String?          @map("notulis_id")
-  status    StatusMusyawarah @default(terjadwal)
-  dibuatAt  DateTime         @default(now()) @map("dibuat_at")
+  id            String           @id @default(cuid())
+  tanggal       DateTime         @db.Date
+  jam           String
+  lokasi        String
+  agenda        String[]
+  hasil         String[]
+  notulisId     String?          @map("notulis_id")
+  status        StatusMusyawarah @default(terjadwal)
+  dibuatAt      DateTime         @default(now()) @map("dibuat_at")
+  // Suspend (KONSEP 3.3): terisi = disuspend, tidak dihitung dan tidak tampil di daftar biasa.
+  disuspendAt   DateTime?        @map("disuspend_at")
+  disuspendOleh String?          @map("disuspend_oleh") // id user yang men-suspend
+  alasanSuspend String?          @map("alasan_suspend")
 
   notulis      Pengurus?      @relation(fields: [notulisId], references: [id])
   tindakLanjut TindakLanjut[]
@@ -296,12 +389,16 @@ model Musyawarah {
 }
 
 model TindakLanjut {
-  id           String             @id @default(cuid())
-  musyawarahId String             @map("musyawarah_id")
-  tugas        String
-  picId        String             @map("pic_id")
-  tenggat      DateTime           @db.Date
-  status       StatusTindakLanjut @default(belum)
+  id            String             @id @default(cuid())
+  musyawarahId  String             @map("musyawarah_id")
+  tugas         String
+  picId         String             @map("pic_id")
+  tenggat       DateTime           @db.Date
+  status        StatusTindakLanjut @default(belum)
+  // Suspend (KONSEP 3.3): terisi = disuspend, tidak dihitung dan tidak tampil di daftar biasa.
+  disuspendAt   DateTime?          @map("disuspend_at")
+  disuspendOleh String?            @map("disuspend_oleh") // id user yang men-suspend
+  alasanSuspend String?            @map("alasan_suspend")
 
   musyawarah Musyawarah @relation(fields: [musyawarahId], references: [id])
   pic        Pengurus   @relation(fields: [picId], references: [id])
@@ -311,11 +408,15 @@ model TindakLanjut {
 
 // pesertaId kosong = masukan tanpa nama (identitas benar-benar tidak disimpan).
 model Masukan {
-  id        String   @id @default(cuid())
-  sesiId    String?  @map("sesi_id")
-  pesertaId String?  @map("peserta_id")
-  isi       String
-  dibuatAt  DateTime @default(now()) @map("dibuat_at")
+  id            String    @id @default(cuid())
+  sesiId        String?   @map("sesi_id")
+  pesertaId     String?   @map("peserta_id")
+  isi           String
+  dibuatAt      DateTime  @default(now()) @map("dibuat_at")
+  // Suspend (KONSEP 3.3): terisi = disuspend, tidak dihitung dan tidak tampil di daftar biasa.
+  disuspendAt   DateTime? @map("disuspend_at")
+  disuspendOleh String?   @map("disuspend_oleh") // id user yang men-suspend
+  alasanSuspend String?   @map("alasan_suspend")
 
   sesi    SesiPengajian? @relation(fields: [sesiId], references: [id])
   peserta Peserta?       @relation(fields: [pesertaId], references: [id])

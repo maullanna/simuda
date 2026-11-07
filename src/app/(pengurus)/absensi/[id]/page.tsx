@@ -6,8 +6,8 @@ import { ArrowLeft, CircleCheck, Clock, HandHeart, NotebookPen, ScanLine, User, 
 import { KotakStat } from "@/components/beranda/KotakStat";
 import { ChipJenisKelamin } from "@/components/ChipJenisKelamin";
 import { FilterChip } from "@/components/FilterChip";
-import { daftarPeserta, dataAbsensiContoh } from "@/lib/mock";
-import { tanggalHariIniWib } from "@/lib/peserta";
+import { ambilDataAbsensi } from "@/lib/data/absensi";
+import { ambilSemuaPeserta } from "@/lib/data/peserta";
 import { daftarPesertaSesi, formatTanggal, labelSasaran, type PesertaSesi } from "@/lib/sesi";
 import { requireRole } from "@/lib/pengguna";
 
@@ -31,8 +31,7 @@ export default async function DetailSesiPage(props: PageProps<"/absensi/[id]">) 
   await connection();
   const { id } = await props.params;
   const sp = await props.searchParams;
-  const hariIni = tanggalHariIniWib();
-  const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
+  const [{ sesi, kehadiran }, daftarPeserta] = await Promise.all([ambilDataAbsensi(), ambilSemuaPeserta()]);
 
   const s = sesi.find((x) => x.id === id);
   if (!s) notFound();
@@ -74,13 +73,13 @@ export default async function DetailSesiPage(props: PageProps<"/absensi/[id]">) 
         </p>
         <div className="flex flex-wrap gap-2">
           {s.status === "berlangsung" && (
-            <md-filled-button href={`/scan?sesi=${s.id}`}>
+            <md-filled-button has-icon href={`/scan?sesi=${s.id}`}>
               <ScanLine slot="icon" size={18} />
               Buka scanner
             </md-filled-button>
           )}
           {selesai && (
-            <md-outlined-button href="/jadwal">
+            <md-outlined-button has-icon href="/jadwal">
               <NotebookPen slot="icon" size={18} />
               {s.catatan ? "Lihat catatan materi" : "Tulis catatan materi"}
             </md-outlined-button>

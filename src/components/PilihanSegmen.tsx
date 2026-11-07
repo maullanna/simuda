@@ -27,7 +27,7 @@ export function PilihanSegmen({
         {pilihan.map((p, i) => (
           <label
             key={p.nilai}
-            className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 px-5 text-sm font-semibold transition-colors hover:bg-surface-high has-checked:bg-secondary-container has-checked:text-on-secondary-container has-focus-visible:bg-surface-highest sm:flex-none ${
+            className={`flex flex-1 cursor-pointer items-center justify-center gap-1.5 whitespace-nowrap px-3 text-sm font-semibold sm:px-5 transition-colors hover:bg-surface-high has-checked:bg-secondary-container has-checked:text-on-secondary-container has-focus-visible:bg-surface-highest sm:flex-none ${
               i > 0 ? "border-l border-outline" : ""
             }`}
           >

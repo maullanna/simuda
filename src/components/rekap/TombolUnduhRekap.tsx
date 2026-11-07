@@ -51,7 +51,7 @@ export function TombolUnduhRekap({ data, namaFile }: { data: DataEksporRekap; na
 
   return (
     <>
-      <md-outlined-button type="button" onClick={unduhExcel} disabled={proses !== null}>
+      <md-outlined-button has-icon type="button" onClick={unduhExcel} disabled={proses !== null}>
         {proses === "excel" ? (
           <LoaderCircle slot="icon" size={18} className="animate-spin" />
         ) : (
@@ -59,7 +59,7 @@ export function TombolUnduhRekap({ data, namaFile }: { data: DataEksporRekap; na
         )}
         Excel
       </md-outlined-button>
-      <md-outlined-button type="button" onClick={unduhPdf} disabled={proses !== null}>
+      <md-outlined-button has-icon type="button" onClick={unduhPdf} disabled={proses !== null}>
         {proses === "pdf" ? <LoaderCircle slot="icon" size={18} className="animate-spin" /> : <FileText slot="icon" size={18} />}
         PDF
       </md-outlined-button>

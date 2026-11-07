@@ -3,7 +3,7 @@
 Sistem absensi dan manajemen pengajian muda/i Bendlay 2 & Bendlay 4.
 Dokumen ini adalah acuan utama untuk pengembangan. Kalau ada keputusan baru, perbarui dokumen ini dulu sebelum mengubah kode.
 
-Terakhir diperbarui: 10 Oktober 2026
+Terakhir diperbarui: 11 Oktober 2026
 
 ---
 
@@ -44,9 +44,18 @@ Peserta absen cukup dengan menunjukkan kartu QR, tanpa mengisi form.
 
 Setiap pengurus punya **jabatan** (tulisan yang tampil, misalnya "Wakil Ketua 1" atau "Penerobos") dan satu **peran di sistem** (yang menentukan apa yang boleh dibuka dan diubah). Hak akses diperiksa di server untuk setiap tindakan, tidak cukup dengan menyembunyikan tombol.
 
-### 3.1 Peran
+### 3.1 Level pengguna
 
-| Peran | Dipegang oleh | Fokus |
+Hak akses diatur **per level**. Setiap pengurus dipilihkan satu level; kalau hak sebuah level diubah, semua pengurus di level itu ikut berubah.
+
+- **Level bawaan** di bawah ini dibuat otomatis dengan hak awal sesuai tabel 3.2.
+- **Administrator bisa menambah level baru** (contoh: Penerobos, Keputrian), mengganti nama, dan mencentang hak aksesnya di halaman **Level pengguna**.
+- **Level Administrator terkunci:** selalu akses penuh dan tidak bisa diubah atau dihapus.
+- **Hanya Administrator** yang boleh mengatur level dan memberi level Administrator. Tidak ada yang bisa mengubah levelnya sendiri.
+- **Fitur khusus Administrator** (Level pengguna, Pengaturan, Hapus permanen) tidak bisa dicentang untuk level lain.
+- Level yang masih dipakai pengurus tidak bisa dihapus. Setiap perubahan level tercatat di `audit_log`.
+
+| Level bawaan | Dipegang oleh | Fokus |
 |---|---|---|
 | Administrator | Pengembang/pengelola sistem | Seluruh aplikasi, termasuk akun dan pengaturan |
 | Kyai | Pimpinan | Memantau semua, tidak mengubah data |
@@ -58,7 +67,7 @@ Setiap pengurus punya **jabatan** (tulisan yang tampil, misalnya "Wakil Ketua 1"
 | Petugas scan | Muda/i yang digilir | Hanya layar Scanner |
 | Peserta (tahap 2) | Muda/i | Data dan kartu sendiri, jadwal, kirim masukan |
 
-### 3.2 Hak akses per fitur
+### 3.2 Hak akses awal per fitur
 
 Kode: **L** = lihat, **T** = tambah, **U** = ubah, **S** = suspend dan pulihkan (lihat 3.3), **Ya** = boleh menjalankan, **–** = tidak ada akses. Administrator selalu punya semua hak, ditambah **H** = hapus permanen (hanya Administrator, lihat 3.4).
 
@@ -70,6 +79,7 @@ Kode: **L** = lihat, **T** = tambah, **U** = ubah, **S** = suspend dan pulihkan 
 | Data peserta | LTUS | L | LTUS | LTUS | LTUS | L | L | – | Data sendiri: L, U (no HP, foto) |
 | Impor peserta dari Excel | Ya | – | Ya | Ya | Ya | – | – | – | – |
 | Kartu: cetak, ganti kartu hilang | LTS | L | LTS | LTS | LTS | – | – | – | Kartu sendiri: L |
+| Biodata muda/i (profil untuk Tim PnKB) | LU | – | – | – | – | – | – | – | Data sendiri: L, U |
 | **Absensi** | | | | | | | | | |
 | Daftar hadir per sesi | L | L | L | L | L | L | L | Sesi yang dibuka | – |
 | Buka dan tutup sesi | Ya | – | Ya | Ya | Ya | – | Ya | – | – |
@@ -97,6 +107,7 @@ Kode: **L** = lihat, **T** = tambah, **U** = ubah, **S** = suspend dan pulihkan 
 | Data pengurus | LTUS | L | LTUS | LTUS | – | – | – | – | – |
 | Akun login: buat, reset kata sandi, suspend | Ya | – | Ya | Ya | – | – | – | – | – |
 | Petugas scan: tunjuk dan cabut | Ya | – | Ya | Ya | – | – | – | – | – |
+| Data kelompok: desa, daerah, Kipok, Tim PnKB | LU | L | LU | LU | L | – | – | – | – |
 | Akun saya: ganti kata sandi sendiri | Ya | Ya | Ya | Ya | Ya | Ya | Ya | Ya | Tahap 2 (OTP) |
 | **Sistem** | | | | | | | | | |
 | Riwayat perubahan semua modul | L | L | L | L | – | – | – | – | – |
@@ -108,7 +119,7 @@ Catatan:
 - Administrator tidak termasuk struktur pengurus Bendlay 2/4. Data dan akun Administrator hanya bisa diubah oleh Administrator.
 - Tidak ada yang bisa men-suspend akun atau mengubah perannya sendiri.
 - "Wilayahnya" berarti hanya peserta di wilayah (Bendlay 2 atau 4) tempat pengurus itu bertugas.
-- Tabel ini masih draf dan perlu dikonfirmasi ke Ketua Muda/i.
+- Tabel ini adalah **hak awal** level bawaan. Hak yang berlaku sesungguhnya diatur Administrator di halaman Level pengguna.
 
 ### 3.3 Suspend, bukan hapus
 
@@ -162,7 +173,8 @@ Hapus permanen hanya ada untuk Administrator, untuk keadaan khusus seperti data 
 | Sodaqoh | `/sodaqoh` | Saldo, pemasukan dan pengeluaran bulan ini, tabel transaksi dengan bukti nota, riwayat perubahan |
 | Musyawarah | `/musyawarah` | Daftar musyawarah dan hasilnya, tindak lanjut (tugas, penanggung jawab, tenggat, status) |
 | Masukan | `/masukan` | Masukan peserta, dengan nama atau tanpa nama |
-| Kepengurusan | `/kepengurusan` | Pimpinan (Kyai, Wakil), struktur pengurus Bendlay 2 / Bendlay 4, peran di sistem |
+| Kepengurusan | `/kepengurusan` | Pimpinan (Kyai, Wakil), struktur pengurus Bendlay 2 / Bendlay 4, level tiap pengurus |
+| Level pengguna | `/level-pengguna` | Hanya Administrator: daftar level, tambah level, centang hak akses per fitur |
 
 ### 4.2 Petugas scan
 
@@ -176,6 +188,7 @@ Hapus permanen hanya ada untuk Administrator, untuk keadaan khusus seperti data 
 |---|---|---|
 | Beranda peserta | `/app-peserta` | Jumlah kehadiran tahun ini, pengajian berikutnya, tombol kabari izin, jadwal minggu ini |
 | Navigasi bawah | – | Beranda, Jadwal, Materi, Kartu (QR di HP) |
+| Biodata saya | `/app-peserta/biodata` | Peserta melihat dan mengisi biodatanya sendiri (bagian 5.1b). Sebelum login peserta tersedia, biodata diinput oleh Administrator |
 
 ---
 
@@ -186,6 +199,14 @@ Hapus permanen hanya ada untuk Administrator, untuk keadaan khusus seperti data 
 - Kategori pra-remaja/remaja/pra-nikah **tidak diisi manual**. Dihitung dari tanggal lahir, dan otomatis berpindah saat peserta berusia 16 dan 19 tahun.
 - Status: aktif atau tidak aktif. Peserta tidak pernah dihapus.
 - Impor dari Excel untuk data awal.
+
+### 5.1b Biodata muda/i (profil untuk Tim PnKB)
+Tujuan: saat muda/i sudah masuk usia pernikahan, Tim PnKB mudah mendapatkan profilnya. Semua isian boleh kosong, dilengkapi bertahap.
+
+- **Biodata per orang:** nama ayah (untuk "bin/binti", otomatis sesuai putra/putri), tempat lahir, anak ke- dari - bersaudara, suku, tinggi (cm) dan berat (kg), golongan darah (A/B/AB/O), status pernikahan (belum menikah / sudah menikah), pendidikan (jenjang SD/SMP/SMA/SMK/D3/D4/S1/S2/S3/lainnya + jurusan atau keterangan, misalnya "S1 Informatika"), skill, pekerjaan, hobi, dapukan.
+- **Data per kelompok (diisi sekali, berlaku untuk semua peserta di kelompok itu):** desa, daerah, Kipok (Kyai Kelompok), Tim PnKB kelompok, Tim PnKB desa, Tim PnKB daerah. Sambung "Klp" = wilayah peserta (Bendlay 2/4).
+- **Halaman profil peserta** menampilkan biodata dan tombol **Salin profil**, yang menyalin teks dengan format "PROFIL BIODATA MUDA MUDI" untuk dikirim ke Tim PnKB.
+- **Data sensitif:** biodata hanya bisa dilihat dan diubah oleh **pemiliknya sendiri** dan **Administrator**. Pengurus lain (termasuk Wakil, Ketua, Sekretaris) hanya melihat data dasar. Biodata tidak dicetak di kartu.
 
 ### 5.2 Kartu peserta
 - Ukuran kartu standar (85,6 × 54 mm).
@@ -271,11 +292,14 @@ Hapus permanen hanya ada untuk Administrator, untuk keadaan khusus seperti data 
 |---|---|---|
 | `peserta` | nama, jenis_kelamin, wilayah, tanggal_lahir, no_hp, foto_url, status, tanggal_bergabung, user_id | Kategori dihitung dari tanggal_lahir, tidak disimpan |
 | `kartu` | peserta_id, token, aktif, dibuat_at, dinonaktifkan_at | Token unik, maksimal satu kartu aktif per peserta |
+| `biodata_peserta` | peserta_id, nama_ayah, tempat_lahir, anak_ke, jumlah_saudara, suku, tinggi_cm, berat_kg, golongan_darah, status_nikah, pendidikan_jenjang, pendidikan_jurusan, skill, pekerjaan, hobi, dapukan | Satu baris per peserta, terpisah dari `peserta` karena sensitif (bagian 5.1b) |
+| `data_kelompok` | wilayah, desa, daerah, kipok, tim_pnkb_kelompok, tim_pnkb_desa, tim_pnkb_daerah | Satu baris per kelompok (Bendlay 2, Bendlay 4) |
 | `pemateri` | nama, keterangan | |
 | `sesi_pengajian` | tanggal, jam_mulai, jenis_kelamin, sasaran, pemateri_id, materi, catatan, status | sasaran: pra-remaja / remaja / pra-nikah / gabungan. status: terjadwal / berlangsung / selesai / batal |
 | `kehadiran` | sesi_id, peserta_id, status, metode, keterangan, dicatat_oleh, waktu | Unik per (sesi_id, peserta_id). status: hadir / izin / alpa. metode: qr / manual / izin |
 | `lampiran` | sesi_id, url, nama_file, tipe | File disimpan di storage, database hanya menyimpan URL |
-| `pengurus` | user_id, nama, jabatan, wilayah, peran | peran: admin / kyai / wakil / ketua / sekretaris / bendahara / pengurus / petugas_scan |
+| `level_pengguna` | kode, nama, keterangan, hak, akses_penuh | hak: daftar tindakan per fitur (hasil centang). kode terisi untuk level bawaan (admin, kyai, …, petugas_scan). akses_penuh = Administrator |
+| `pengurus` | user_id, nama, jabatan, wilayah, level_id, peserta_id, aktif | Hak akses mengikuti level. peserta_id terisi untuk petugas scan |
 | `sodaqoh` | tanggal, sesi_id, jenis, jumlah, keterangan, penghitung_1_id, penghitung_2_id, bukti_url, dicatat_oleh | jenis: pemasukan / pengeluaran. Jumlah dalam rupiah, bilangan bulat |
 | `audit_log` | user_id, tabel, record_id, aksi, data_lama, data_baru, alasan, waktu | Wajib untuk setiap tambah, ubah, suspend, pulihkan, dan hapus. aksi: buat / ubah / suspend / pulihkan / hapus. Tidak pernah dihapus |
 | `musyawarah` | tanggal, agenda, lokasi, hasil, notulis_id, status | |
@@ -397,8 +421,9 @@ Detail harian ada di file `Timeline-Sistem-Pengajian.xlsx`.
 | Kartu | Kartu biasa: nama, foto, QR |
 | Persetujuan wali | Di luar sistem |
 | Pengingat WhatsApp | Sekali seminggu |
+| Biodata muda/i | Untuk Tim PnKB. Hanya pemiliknya sendiri dan Administrator yang bisa melihat dan mengubah. Kipok dan Tim PnKB diisi per kelompok (diputuskan 11 Oktober 2026) |
 | Hapus data | Pengurus hanya bisa suspend (dengan alasan, bisa dipulihkan). Hapus permanen hanya oleh Administrator, untuk data yang sudah di-suspend (diputuskan 10 Oktober 2026) |
-| Peran per fitur | Hak akses diatur per fitur dan per tindakan (lihat, tambah, ubah, suspend), bagian 3.2 |
+| Level pengguna | Hak akses diatur per level dan bisa dicentang Administrator per fitur dan tindakan. Level Administrator terkunci akses penuh (diputuskan 11 Oktober 2026) |
 
 ---
 

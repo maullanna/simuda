@@ -1,20 +1,22 @@
 import type { Metadata } from "next";
-import { Fragment } from "react";
-import { Crown, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { ChevronRight, Crown, ShieldCheck } from "lucide-react";
 import { TombolAkun } from "@/components/kepengurusan/AksiAkun";
 import { TombolTambahPengurus, TombolUbahPengurus } from "@/components/kepengurusan/AksiKepengurusan";
+import { DataKelompok } from "@/components/kepengurusan/DataKelompok";
 import { PetugasScan } from "@/components/kepengurusan/PetugasScan";
-import { ambilSemuaPengurus, type PengurusTampil } from "@/lib/data/pengurus";
+import { ambilSemuaDataKelompok } from "@/lib/data/biodata";
+import { ambilSemuaLevel, ambilSemuaPengurus, type PengurusTampil } from "@/lib/data/pengurus";
 import { ambilSemuaPeserta } from "@/lib/data/peserta";
-import { DAFTAR_FITUR, KOLOM_PERAN, boleh } from "@/lib/hak-akses";
-import { labelPeran } from "@/lib/kepengurusan";
+import { boleh } from "@/lib/hak-akses";
+import type { LevelRingkas } from "@/lib/kepengurusan";
 import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Kepengurusan · SIMUDA",
 };
 
-type Hak = { bolehKelola: boolean; bolehAkun: boolean; pengurusIdSaya: string };
+type Hak = { bolehKelola: boolean; bolehAkun: boolean; pengurusIdSaya: string; pilihanLevel: LevelRingkas[] };
 
 function KartuPengurus({ p, hak }: { p: PengurusTampil; hak: Hak }) {
   return (
@@ -28,9 +30,9 @@ function KartuPengurus({ p, hak }: { p: PengurusTampil; hak: Hak }) {
         <TombolAkun akun={p} bolehKelola={hak.bolehAkun} diriSendiri={p.id === hak.pengurusIdSaya} />
       </div>
       <span className="shrink-0 rounded-lg bg-secondary-container px-2 py-1 text-[11px] font-bold text-on-secondary-container">
-        {labelPeran[p.peran]}
+        {p.level.nama}
       </span>
-      {hak.bolehKelola && <TombolUbahPengurus pengurus={p} />}
+      {hak.bolehKelola && <TombolUbahPengurus pengurus={p} pilihanLevel={hak.pilihanLevel} />}
     </li>
   );
 }
@@ -39,21 +41,28 @@ function KartuPengurus({ p, hak }: { p: PengurusTampil; hak: Hak }) {
 // Dibuka oleh Kyai (lihat), Wakil dan Ketua (kelola), serta Administrator.
 export default async function KepengurusanPage() {
   const pengguna = await requireRole("pengurus", "lihat");
+  const [semua, semuaPeserta, dataKelompok, semuaLevel] = await Promise.all([
+    ambilSemuaPengurus(),
+    ambilSemuaPeserta(),
+    ambilSemuaDataKelompok(),
+    ambilSemuaLevel(),
+  ]);
   const hak: Hak = {
-    bolehKelola: boleh(pengguna.peran, "pengurus", "ubah"),
-    bolehAkun: boleh(pengguna.peran, "akunLogin", "jalankan"),
+    bolehKelola: boleh(pengguna, "pengurus", "ubah"),
+    bolehAkun: boleh(pengguna, "akunLogin", "jalankan"),
     pengurusIdSaya: pengguna.pengurusId,
+    // Level Administrator hanya bisa dipilih Administrator. Petugas scan diatur di bagiannya sendiri.
+    pilihanLevel: semuaLevel.filter((l) => (pengguna.aksesPenuh || !l.aksesPenuh) && l.kode !== "petugas_scan"),
   };
-  const [semua, semuaPeserta] = await Promise.all([ambilSemuaPengurus(), ambilSemuaPeserta()]);
 
   // Baris Administrator hanya terlihat oleh Administrator (dan hanya bisa diubah olehnya, dicek di server).
-  const admin = pengguna.peran === "admin" ? semua.filter((p) => p.peran === "admin") : [];
-  const daftarPengurus = semua.filter((p) => p.peran !== "admin" && p.peran !== "petugas_scan");
+  const admin = pengguna.aksesPenuh ? semua.filter((p) => p.level.aksesPenuh) : [];
+  const daftarPengurus = semua.filter((p) => !p.level.aksesPenuh && !p.pesertaId);
   const pimpinan = daftarPengurus.filter((p) => p.wilayah === "Pimpinan");
   const perWilayah = ["Bendlay 2", "Bendlay 4"].map((w) => ({ wilayah: w, pengurus: daftarPengurus.filter((p) => p.wilayah === w) }));
   // Petugas yang dicabut tidak ditampilkan; mereka bisa dipilih lagi lewat "Tambah petugas".
   const petugas = semua
-    .filter((p) => p.peran === "petugas_scan" && p.aktif && p.pesertaId)
+    .filter((p) => p.aktif && p.pesertaId)
     .map((p) => ({ id: p.id, pesertaId: p.pesertaId!, nama: p.nama, email: p.email, aktif: p.aktif }));
   const calonPetugas = semuaPeserta
     .filter((p) => p.status === "aktif")
@@ -70,7 +79,7 @@ export default async function KepengurusanPage() {
             {daftarPengurus.length} pengurus · penanggung jawab: Ketua Muda/i. Peran di sistem menentukan apa yang boleh dibuka.
           </p>
         </div>
-        {hak.bolehKelola && <TombolTambahPengurus />}
+        {hak.bolehKelola && <TombolTambahPengurus pilihanLevel={hak.pilihanLevel} />}
       </header>
 
       {/* Administrator (hanya terlihat oleh Administrator) */}
@@ -102,7 +111,7 @@ export default async function KepengurusanPage() {
               <p className="max-w-full truncate text-lg font-extrabold">{p.nama}</p>
               <TombolAkun akun={p} bolehKelola={hak.bolehAkun} diriSendiri={p.id === hak.pengurusIdSaya} />
             </div>
-            {hak.bolehKelola && <TombolUbahPengurus pengurus={p} />}
+            {hak.bolehKelola && <TombolUbahPengurus pengurus={p} pilihanLevel={hak.pilihanLevel} />}
           </div>
         ))}
       </section>
@@ -121,66 +130,26 @@ export default async function KepengurusanPage() {
         ))}
       </div>
 
-      <PetugasScan peserta={calonPetugas} petugas={petugas} bolehKelola={boleh(pengguna.peran, "petugasScan", "jalankan")} />
+      <PetugasScan peserta={calonPetugas} petugas={petugas} bolehKelola={boleh(pengguna, "petugasScan", "jalankan")} />
 
-      {/* Hak akses per fitur (KONSEP bagian 3.2), dibaca dari lib/hak-akses.ts yang juga dipakai server */}
-      <section className="flex flex-col gap-3 rounded-[28px] bg-surface-low p-5">
-        <div>
-          <h2 className="flex items-center gap-2 text-lg font-extrabold">
-            <ShieldCheck size={20} className="text-primary" /> Hak akses per fitur
-          </h2>
-          <p className="text-sm text-on-surface-variant">
-            L = lihat · T = tambah · U = ubah · S = suspend & pulihkan · Ya = boleh. Administrator juga bisa hapus permanen.
-          </p>
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[56rem] text-left text-sm">
-            <thead className="text-xs font-bold uppercase tracking-wide text-on-surface-variant">
-              <tr>
-                <th className="py-2 pr-3">Fitur</th>
-                {KOLOM_PERAN.map((p) => (
-                  <th key={p} className="px-2 py-2 text-center">
-                    {p === "peserta" ? "Peserta" : labelPeran[p]}
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {Object.values(DAFTAR_FITUR).map((f, i, semua) => (
-                <Fragment key={f.label}>
-                  {f.kelompok !== semua[i - 1]?.kelompok && (
-                    <tr className="border-t border-outline-variant/60">
-                      <td colSpan={KOLOM_PERAN.length + 1} className="pb-1 pt-4 text-xs font-bold uppercase tracking-wider text-primary">
-                        {f.kelompok}
-                      </td>
-                    </tr>
-                  )}
-                  <tr className="border-t border-outline-variant/30">
-                    <td className="py-2 pr-3 font-semibold">{f.label}</td>
-                    {f.hak.map((a, j) => (
-                      <td key={KOLOM_PERAN[j]} className="px-2 py-2 text-center">
-                        {a === "–" ? (
-                          <span className="text-on-surface-variant/60">–</span>
-                        ) : (
-                          <span
-                            className={`inline-flex rounded-md px-1.5 py-0.5 text-xs font-bold ${
-                              /^(Ya|[LTUS]*[TUS][LTUS]*)( |$)/.test(a)
-                                ? "bg-primary-container text-on-primary-container"
-                                : "bg-surface-highest text-on-surface-variant"
-                            }`}
-                          >
-                            {a}
-                          </span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                </Fragment>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </section>
+      <DataKelompok semua={dataKelompok} bolehUbah={boleh(pengguna, "dataKelompok", "ubah")} />
+
+      {/* Hak akses diatur per level di halaman Level pengguna (hanya Administrator, KONSEP 3.1) */}
+      {boleh(pengguna, "levelPengguna", "jalankan") && (
+        <Link
+          href="/level-pengguna"
+          className="group flex items-center gap-4 rounded-[28px] bg-surface-low p-5 transition-colors hover:bg-surface-mid"
+        >
+          <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-primary-container text-on-primary-container transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-rotate-6 group-hover:scale-110">
+            <ShieldCheck size={22} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <h2 className="text-lg font-extrabold">Level pengguna dan hak akses</h2>
+            <p className="text-sm text-on-surface-variant">{semuaLevel.length} level. Atur apa saja yang boleh dibuka dan diubah tiap level.</p>
+          </div>
+          <ChevronRight size={20} className="shrink-0 text-on-surface-variant transition-transform group-hover:translate-x-1" />
+        </Link>
+      )}
     </div>
   );
 }

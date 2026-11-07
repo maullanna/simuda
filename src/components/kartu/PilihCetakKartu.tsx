@@ -184,12 +184,12 @@ export function PilihCetakKartu({
         </label>
 
         <div className="flex flex-wrap gap-2">
-          <md-filled-button type="button" disabled={terpilih.length === 0 || proses} onClick={buatPdf}>
+          <md-filled-button has-icon type="button" disabled={terpilih.length === 0 || proses} onClick={buatPdf}>
             {proses ? <LoaderCircle slot="icon" size={18} className="animate-spin" /> : <FileText slot="icon" size={18} />}
             {proses ? "Membuat PDF..." : "Buat PDF"}
           </md-filled-button>
           {urlPdf && (
-            <md-filled-tonal-button href={urlPdf} download={namaFile}>
+            <md-filled-tonal-button has-icon href={urlPdf} download={namaFile}>
               <Download slot="icon" size={18} />
               Unduh PDF
             </md-filled-tonal-button>

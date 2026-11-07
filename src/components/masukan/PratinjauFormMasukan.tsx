@@ -84,7 +84,7 @@ export function PratinjauFormMasukan() {
                 <span className="block text-xs text-on-surface-variant">Namamu tidak disimpan sama sekali, pengurus pun tidak tahu.</span>
               </span>
             </label>
-            <md-filled-button type="submit">
+            <md-filled-button has-icon type="submit">
               <Send slot="icon" size={16} />
               Kirim
             </md-filled-button>

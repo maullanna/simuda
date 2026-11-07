@@ -3,6 +3,7 @@ import Link from "next/link";
 import { connection } from "next/server";
 import { ArrowLeft } from "lucide-react";
 import { FormPeserta } from "@/components/FormPeserta";
+import { boleh } from "@/lib/hak-akses";
 import { requireRole } from "@/lib/pengguna";
 import { tanggalHariIniWib } from "@/lib/peserta";
 
@@ -11,7 +12,7 @@ export const metadata: Metadata = {
 };
 
 export default async function TambahPesertaPage() {
-  await requireRole("peserta", "tambah");
+  const pengguna = await requireRole("peserta", "tambah");
   // Halaman ini memakai tanggal hari ini (batas tanggal lahir), jadi harus dibuat
   // saat dibuka, bukan sekali saat build. Tanpa ini tanggalnya membeku di hari build.
   await connection();
@@ -27,7 +28,7 @@ export default async function TambahPesertaPage() {
         </Link>
         <h1 className="text-2xl font-extrabold lg:text-3xl">Tambah peserta</h1>
       </header>
-      <FormPeserta hariIni={tanggalHariIniWib()} />
+      <FormPeserta hariIni={tanggalHariIniWib()} bolehBiodata={boleh(pengguna, "biodata", "ubah")} />
     </div>
   );
 }

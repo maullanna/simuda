@@ -77,7 +77,7 @@ export function FormGantiSandi() {
       <KolomKataSandi name="baru" label="Kata sandi baru" nilai={baru} ubah={setBaru} galat={galat.baru} />
       <KolomKataSandi name="ulangi" label="Ulangi kata sandi baru" nilai={ulangi} ubah={setUlangi} galat={galat.ulangi} />
       <p className="text-xs text-on-surface-variant">Minimal 8 karakter. Jangan pakai tanggal lahir atau nama sendiri.</p>
-      <md-filled-button type="submit" disabled={proses}>
+      <md-filled-button has-icon type="submit" disabled={proses}>
         {proses ? <LoaderCircle slot="icon" size={18} className="animate-spin" /> : <KeyRound slot="icon" size={18} />}
         {proses ? "Menyimpan..." : "Simpan kata sandi baru"}
       </md-filled-button>

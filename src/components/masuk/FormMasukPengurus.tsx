@@ -38,7 +38,7 @@ export function FormMasukPengurus({ tujuan }: { tujuan: string }) {
           error.status === 429
             ? "Terlalu banyak percobaan. Tunggu sebentar lalu coba lagi."
             : error.status === 403
-              ? "Akses akunmu sedang dicabut. Hubungi Ketua Muda/i wilayahmu."
+              ? "Akses akunmu sedang dicabut. Hubungi Ketua Muda/i kelompokmu."
               : "Email atau kata sandi salah.",
       });
       return;
@@ -91,11 +91,11 @@ export function FormMasukPengurus({ tujuan }: { tujuan: string }) {
           {lihatSandi ? <EyeOff size={18} /> : <Eye size={18} />}
         </button>
       </div>
-      <md-filled-button type="submit" disabled={proses}>
+      <md-filled-button has-icon type="submit" disabled={proses}>
         {proses ? <LoaderCircle slot="icon" size={18} className="animate-spin" /> : <LogIn slot="icon" size={18} />}
         {proses ? "Memeriksa..." : "Masuk"}
       </md-filled-button>
-      <p className="text-center text-xs text-on-surface-variant">Lupa kata sandi atau belum punya akun? Hubungi Ketua Muda/i wilayahmu.</p>
+      <p className="text-center text-xs text-on-surface-variant">Lupa kata sandi atau belum punya akun? Hubungi Ketua Muda/i kelompokmu.</p>
     </form>
   );
 }

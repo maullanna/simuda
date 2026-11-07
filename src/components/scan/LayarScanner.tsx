@@ -212,6 +212,7 @@ export function LayarScanner({
                 <CameraOff size={36} />
                 <p className="text-sm">{galatKamera ?? "Kamera dimatikan."}</p>
                 <md-filled-tonal-button
+                  has-icon
                   type="button"
                   onClick={() => {
                     setGalatKamera(null);

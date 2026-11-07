@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { redirect } from "next/navigation";
 import { FormMasukPengurus } from "@/components/masuk/FormMasukPengurus";
 import { KerangkaMasuk } from "@/components/masuk/KerangkaMasuk";
-import { ambilPenggunaMasuk } from "@/lib/pengguna";
+import { ambilPenggunaMasuk, halamanAwal } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Masuk pengurus · SIMUDA",
@@ -21,7 +21,7 @@ export default async function MasukPengurusPage(props: PageProps<"/masuk">) {
 
   // Sudah masuk: tidak perlu login lagi.
   const pengguna = await ambilPenggunaMasuk();
-  if (pengguna) redirect(pengguna.peran === "petugas_scan" ? "/scan" : tujuan);
+  if (pengguna) redirect(tujuan === "/dashboard" ? halamanAwal(pengguna) : tujuan);
 
   return (
     <KerangkaMasuk judul="Masuk pengurus" keterangan="Untuk pengurus dan petugas scan">

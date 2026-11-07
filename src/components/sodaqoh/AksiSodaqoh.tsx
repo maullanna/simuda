@@ -14,7 +14,7 @@ export function TombolCatatPemasukan({ hariIni, daftarPengurus }: { hariIni: str
   const [terbuka, setTerbuka] = useState(false);
   return (
     <>
-      <md-filled-button type="button" onClick={() => setTerbuka(true)}>
+      <md-filled-button has-icon type="button" onClick={() => setTerbuka(true)}>
         <ArrowDownLeft slot="icon" size={18} />
         Catat pemasukan
       </md-filled-button>
@@ -29,7 +29,7 @@ export function TombolCatatPengeluaran({ hariIni }: { hariIni: string }) {
   const [terbuka, setTerbuka] = useState(false);
   return (
     <>
-      <md-filled-tonal-button type="button" onClick={() => setTerbuka(true)}>
+      <md-filled-tonal-button has-icon type="button" onClick={() => setTerbuka(true)}>
         <ArrowUpRight slot="icon" size={18} />
         Catat pengeluaran
       </md-filled-tonal-button>

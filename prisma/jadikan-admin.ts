@@ -17,9 +17,11 @@ async function main() {
   const tanya = createInterface({ input: stdin, output: stdout });
 
   const email = (process.env.ADMIN_EMAIL ?? (await tanya.question("Email akun yang dijadikan administrator: "))).trim().toLowerCase();
-  const user = await prisma.user.findUnique({ where: { email }, include: { pengurus: true } });
+  const user = await prisma.user.findUnique({ where: { email }, include: { pengurus: { include: { level: true } } } });
   if (!user) throw new Error(`Akun dengan email ${email} tidak ditemukan. Buat dulu dengan: npm run akun`);
-  if (user.pengurus?.peran === "admin") throw new Error(`${email} sudah administrator.`);
+  if (user.pengurus?.level.aksesPenuh) throw new Error(`${email} sudah administrator.`);
+  const levelAdmin = await prisma.levelPengguna.findFirst({ where: { aksesPenuh: true }, orderBy: { dibuatAt: "asc" } });
+  if (!levelAdmin) throw new Error("Level Administrator belum ada. Jalankan migrasi database dulu.");
 
   const namaDefault = user.pengurus?.nama ?? user.name;
   const jawab = process.env.ADMIN_NAMA ?? (await tanya.question(`Nama yang tampil (Enter = ${namaDefault}): `));
@@ -30,7 +32,7 @@ async function main() {
     // Lepas akun dari data pengurus sebelumnya (datanya tetap ada, hanya tidak terhubung ke akun ini).
     if (user.pengurus) await tx.pengurus.update({ where: { id: user.pengurus.id }, data: { userId: null } });
     await tx.pengurus.create({
-      data: { nama, jabatan: "Administrator", wilayah: "pimpinan", peran: "admin", userId: user.id },
+      data: { nama, jabatan: "Administrator", wilayah: "pimpinan", levelId: levelAdmin.id, userId: user.id },
     });
     await tx.user.update({ where: { id: user.id }, data: { name: nama } });
     await tx.auditLog.create({
@@ -39,8 +41,8 @@ async function main() {
         tabel: "pengurus",
         recordId: user.id,
         aksi: "ubah",
-        dataLama: user.pengurus ? { pengurusSebelumnya: user.pengurus.id, peran: user.pengurus.peran } : undefined,
-        dataBaru: { peran: "admin", nama },
+        dataLama: user.pengurus ? { pengurusSebelumnya: user.pengurus.id, level: user.pengurus.level.nama } : undefined,
+        dataBaru: { level: levelAdmin.nama, nama },
         alasan: "Dijadikan administrator lewat skrip",
       },
     });

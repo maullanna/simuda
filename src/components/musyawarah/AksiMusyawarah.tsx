@@ -13,7 +13,7 @@ export function TombolJadwalkan({ hariIni }: { hariIni: string }) {
   const [terbuka, setTerbuka] = useState(false);
   return (
     <>
-      <md-filled-button type="button" onClick={() => setTerbuka(true)}>
+      <md-filled-button has-icon type="button" onClick={() => setTerbuka(true)}>
         <CalendarPlus slot="icon" size={18} />
         Jadwalkan musyawarah
       </md-filled-button>
@@ -38,12 +38,12 @@ export function TombolTulisHasil({
   return (
     <>
       {varian === "tonal" ? (
-        <md-filled-tonal-button type="button" onClick={() => setTerbuka(true)}>
+        <md-filled-tonal-button has-icon type="button" onClick={() => setTerbuka(true)}>
           <NotebookPen slot="icon" size={18} />
           {label}
         </md-filled-tonal-button>
       ) : (
-        <md-text-button type="button" onClick={() => setTerbuka(true)}>
+        <md-text-button has-icon type="button" onClick={() => setTerbuka(true)}>
           <NotebookPen slot="icon" size={16} />
           {label}
         </md-text-button>

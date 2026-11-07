@@ -20,7 +20,7 @@ export function TombolSalinRingkasan({ teks }: { teks: string }) {
   }
 
   return (
-    <md-filled-tonal-button type="button" onClick={salin}>
+    <md-filled-tonal-button has-icon type="button" onClick={salin}>
       {tersalin ? <Check slot="icon" size={18} /> : <Copy slot="icon" size={18} />}
       {tersalin ? "Tersalin" : "Salin ringkasan untuk grup"}
     </md-filled-tonal-button>

@@ -39,7 +39,7 @@ export function HeroBeranda({
 
       {adaPengajian && (
         <div className="mt-6 flex flex-wrap gap-2">
-          <md-filled-button href="/scan">
+          <md-filled-button has-icon href="/scan">
             <ScanLine slot="icon" size={18} />
             Buka scanner
           </md-filled-button>

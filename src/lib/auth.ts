@@ -7,8 +7,14 @@ import { APIError } from "better-auth/api";
 import { nextCookies } from "better-auth/next-js";
 import { prisma } from "@/lib/db";
 
+// Di Vercel, setiap deploy juga punya alamat sendiri (misalnya simuda-git-xxx.vercel.app).
+// Alamat itu ditambahkan sebagai asal yang dipercaya supaya login tetap bisa di alamat pratinjau.
+// Alamat utama tetap BETTER_AUTH_URL.
+const alamatVercel = [process.env.VERCEL_URL, process.env.VERCEL_BRANCH_URL].filter(Boolean).map((h) => `https://${h}`);
+
 export const auth = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
+  trustedOrigins: alamatVercel,
   emailAndPassword: {
     enabled: true,
     // Tidak ada pendaftaran mandiri: akun pengurus dibuat oleh Wakil/Ketua (KONSEP bagian 3).

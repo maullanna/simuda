@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { FilterChip } from "@/components/FilterChip";
+import { AksiBarisPeserta } from "@/components/peserta/AksiBarisPeserta";
 import { KolomCari } from "@/components/KolomCari";
 import { Paginasi } from "@/components/Paginasi";
 import { potongHalaman } from "@/lib/halaman";
@@ -59,10 +60,15 @@ function inisial(nama: string): string {
 export default async function PesertaPage(props: PageProps<"/peserta">) {
   // Semua pengurus boleh melihat; hanya Wakil, Ketua, Sekretaris yang boleh mengelola (KONSEP bagian 3).
   const pengguna = await requireRole("peserta", "lihat");
-  const bolehKelola = boleh(pengguna.peran, "peserta", "ubah");
-  const bolehTambah = boleh(pengguna.peran, "peserta", "tambah");
-  const bolehImpor = boleh(pengguna.peran, "imporPeserta", "jalankan");
-  const bolehKartu = boleh(pengguna.peran, "kartu", "tambah");
+  const bolehTambah = boleh(pengguna, "peserta", "tambah");
+  const bolehImpor = boleh(pengguna, "imporPeserta", "jalankan");
+  const bolehKartu = boleh(pengguna, "kartu", "tambah");
+  // Kolom aksi per baris (KONSEP 3.2–3.4). Hapus permanen hanya Administrator.
+  const hak = {
+    ubah: boleh(pengguna, "peserta", "ubah"),
+    suspend: boleh(pengguna, "peserta", "suspend"),
+    hapus: boleh(pengguna, "peserta", "hapus"),
+  };
   const daftarPeserta = await ambilSemuaPeserta();
   const sp = await props.searchParams;
   const filter: Filter = {
@@ -177,10 +183,11 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
               <tr>
                 <th className="w-12 py-3 pl-4 lg:pl-6">No</th>
                 <th className="px-4 py-3">Nama</th>
-                <th className="hidden px-4 py-3 md:table-cell">Wilayah</th>
+                <th className="hidden px-4 py-3 md:table-cell">Kelompok</th>
                 <th className="px-4 py-3">Kategori</th>
                 <th className="hidden px-4 py-3 sm:table-cell">Umur</th>
                 <th className="hidden px-4 py-3 lg:table-cell">No HP</th>
+                <th className="py-3 pl-2 pr-4 text-right lg:pr-6">Aksi</th>
               </tr>
             </thead>
             <tbody>
@@ -199,13 +206,9 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
                         {inisial(p.nama)}
                       </div>
                       <div className="min-w-0">
-                        {bolehKelola ? (
-                          <Link href={`/peserta/${p.id}/ubah`} className="block truncate font-semibold hover:underline">
-                            {p.nama}
-                          </Link>
-                        ) : (
-                          <p className="truncate font-semibold">{p.nama}</p>
-                        )}
+                        <Link href={`/peserta/${p.id}`} className="block truncate font-semibold hover:underline">
+                          {p.nama}
+                        </Link>
                         <p className="truncate text-xs text-on-surface-variant">
                           {labelJenisKelamin[p.jenisKelamin]}
                           <span className="md:hidden"> · {p.wilayah}</span>
@@ -229,6 +232,9 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
                   </td>
                   <td className="hidden px-4 py-3 sm:table-cell">{p.umur} th</td>
                   <td className="hidden px-4 py-3 text-on-surface-variant lg:table-cell">{p.noHp}</td>
+                  <td className="py-2 pl-2 pr-2 lg:pr-4">
+                    <AksiBarisPeserta id={p.id} nama={p.nama} aktif={p.status === "aktif"} hak={hak} />
+                  </td>
                 </tr>
               ))}
             </tbody>

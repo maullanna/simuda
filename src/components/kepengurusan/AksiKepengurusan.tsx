@@ -5,10 +5,10 @@ import { LoaderCircle, Pencil, UserPlus } from "lucide-react";
 import { simpanPengurus } from "@/app/(pengurus)/kepengurusan/aksi";
 import { Dialog } from "@/components/Dialog";
 import { PilihanSegmen } from "@/components/PilihanSegmen";
-import { PERAN_PENGURUS, labelPeran, periksaPengurus, type GalatPengurus, type Pengurus } from "@/lib/kepengurusan";
+import { periksaPengurus, type GalatPengurus, type LevelRingkas, type Pengurus } from "@/lib/kepengurusan";
 
-// Form tambah/ubah pengurus. Hanya Wakil dan Ketua (+ Administrator) yang boleh; server memeriksa ulang.
-function FormPengurus({ pengurus, selesai }: { pengurus?: Pengurus; selesai: () => void }) {
+// Form tambah/ubah pengurus. Yang boleh diatur level-nya (KONSEP 3.1); server memeriksa ulang.
+function FormPengurus({ pengurus, pilihanLevel, selesai }: { pengurus?: Pengurus; pilihanLevel: LevelRingkas[]; selesai: () => void }) {
   const [galat, setGalat] = useState<GalatPengurus>({});
   const [pesanUmum, setPesanUmum] = useState<string>();
   const [proses, setProses] = useState(false);
@@ -21,7 +21,7 @@ function FormPengurus({ pengurus, selesai }: { pengurus?: Pengurus; selesai: () 
       nama: String(d.get("nama") ?? ""),
       jabatan: String(d.get("jabatan") ?? ""),
       wilayah: String(d.get("wilayah") ?? ""),
-      peran: String(d.get("peran") ?? ""),
+      levelId: String(d.get("levelId") ?? ""),
     });
     setGalat(g);
     setPesanUmum(undefined);
@@ -70,7 +70,7 @@ function FormPengurus({ pengurus, selesai }: { pengurus?: Pengurus; selesai: () 
         className="w-full"
       />
       <PilihanSegmen
-        label="Wilayah"
+        label="Kelompok"
         name="wilayah"
         nilaiAwal={pengurus?.wilayah}
         error={galat.wilayah}
@@ -81,28 +81,29 @@ function FormPengurus({ pengurus, selesai }: { pengurus?: Pengurus; selesai: () 
         ]}
       />
       <label className="flex flex-col gap-1.5">
-        <span className="text-sm font-semibold text-on-surface-variant">Peran di sistem (menentukan hak akses)</span>
+        <span className="text-sm font-semibold text-on-surface-variant">Level (menentukan hak akses)</span>
         <select
-          name="peran"
-          defaultValue={pengurus?.peran ?? ""}
-          className={`h-14 cursor-pointer rounded-[4px] border bg-transparent px-4 text-on-surface outline-none focus:border-2 focus:border-primary ${galat.peran ? "border-error" : "border-outline"}`}
+          name="levelId"
+          defaultValue={pengurus?.levelId ?? ""}
+          className={`h-14 cursor-pointer rounded-[4px] border bg-transparent px-4 text-on-surface outline-none focus:border-2 focus:border-primary ${galat.levelId ? "border-error" : "border-outline"}`}
         >
           <option value="" disabled>
-            Pilih peran
+            Pilih level
           </option>
-          {PERAN_PENGURUS.map((p) => (
-            <option key={p} value={p}>
-              {labelPeran[p]}
+          {pilihanLevel.map((l) => (
+            <option key={l.id} value={l.id}>
+              {l.nama}
+              {l.aksesPenuh ? " (akses penuh)" : ""}
             </option>
           ))}
         </select>
-        {galat.peran && <span className="px-4 text-xs text-error">{galat.peran}</span>}
+        {galat.levelId && <span className="px-4 text-xs text-error">{galat.levelId}</span>}
       </label>
       <div className="flex justify-end gap-2">
         <md-text-button type="button" onClick={selesai}>
           Batal
         </md-text-button>
-        <md-filled-button type="submit" disabled={proses}>
+        <md-filled-button has-icon={proses} type="submit" disabled={proses}>
           {proses && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
           {proses ? "Menyimpan..." : pengurus ? "Simpan perubahan" : "Tambah pengurus"}
         </md-filled-button>
@@ -111,22 +112,22 @@ function FormPengurus({ pengurus, selesai }: { pengurus?: Pengurus; selesai: () 
   );
 }
 
-export function TombolTambahPengurus() {
+export function TombolTambahPengurus({ pilihanLevel }: { pilihanLevel: LevelRingkas[] }) {
   const [terbuka, setTerbuka] = useState(false);
   return (
     <>
-      <md-filled-button type="button" onClick={() => setTerbuka(true)}>
+      <md-filled-button has-icon type="button" onClick={() => setTerbuka(true)}>
         <UserPlus slot="icon" size={18} />
         Tambah pengurus
       </md-filled-button>
       <Dialog terbuka={terbuka} tutup={() => setTerbuka(false)} judul="Tambah pengurus">
-        <FormPengurus selesai={() => setTerbuka(false)} />
+        <FormPengurus pilihanLevel={pilihanLevel} selesai={() => setTerbuka(false)} />
       </Dialog>
     </>
   );
 }
 
-export function TombolUbahPengurus({ pengurus }: { pengurus: Pengurus }) {
+export function TombolUbahPengurus({ pengurus, pilihanLevel }: { pengurus: Pengurus; pilihanLevel: LevelRingkas[] }) {
   const [terbuka, setTerbuka] = useState(false);
   return (
     <>
@@ -139,7 +140,7 @@ export function TombolUbahPengurus({ pengurus }: { pengurus: Pengurus }) {
         <Pencil size={16} />
       </button>
       <Dialog terbuka={terbuka} tutup={() => setTerbuka(false)} judul="Ubah pengurus" keterangan={`${pengurus.jabatan} · ${pengurus.wilayah}`}>
-        <FormPengurus pengurus={pengurus} selesai={() => setTerbuka(false)} />
+        <FormPengurus pengurus={pengurus} pilihanLevel={pilihanLevel} selesai={() => setTerbuka(false)} />
       </Dialog>
     </>
   );

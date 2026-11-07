@@ -1,8 +1,4 @@
-// Membuat akun login untuk seorang pengurus, lalu menghubungkannya ke data pengurus itu.
-// Jalankan: npm run akun
-//
-// Pendaftaran lewat aplikasi sengaja dimatikan (disableSignUp), jadi akun dibuat dari sini.
-// Bisa juga tanpa pertanyaan, lewat variabel: AKUN_PENGURUS, AKUN_EMAIL, AKUN_SANDI.
+
 
 import "dotenv/config";
 import { stdin, stdout } from "node:process";
@@ -14,8 +10,7 @@ import { PrismaClient } from "../src/generated/prisma/client";
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ connectionString: process.env.DIRECT_URL ?? process.env.DATABASE_URL! }) });
 
-// Instans Better Auth khusus skrip ini: sama dengan src/lib/auth.ts (database & cara hash kata sandi),
-// bedanya pendaftaran diizinkan karena yang menjalankan skrip ini sudah punya akses ke database.
+
 const authSkrip = betterAuth({
   database: prismaAdapter(prisma, { provider: "postgresql" }),
   emailAndPassword: { enabled: true, minPasswordLength: 8 },
@@ -28,10 +23,11 @@ async function main() {
   if (!idPengurus) {
     const belumPunya = await prisma.pengurus.findMany({ where: { userId: null, aktif: true }, orderBy: { nama: "asc" } });
     console.log("\nPengurus yang belum punya akun:");
-    belumPunya.forEach((p) => console.log(`  ${p.id.padEnd(8)} ${p.nama} (${p.jabatan}, ${p.wilayah})`));
-    idPengurus = (await tanya.question("\nKetik id pengurus (contoh g03): ")).trim();
+    belumPunya.forEach((p) => console.log(`  ${p.id}  ${p.nama} (${p.jabatan}, ${p.wilayah})`));
+    console.log("(Administrator dan pengurus yang sudah punya akun tidak tampil di sini. Lupa kata sandi: npm run reset-sandi)");
+    idPengurus = (await tanya.question("\nSalin lalu tempel id pengurus dari daftar di atas: ")).trim();
   }
-  const pengurus = await prisma.pengurus.findUnique({ where: { id: idPengurus } });
+  const pengurus = await prisma.pengurus.findUnique({ where: { id: idPengurus }, include: { level: true } });
   if (!pengurus) throw new Error(`Pengurus dengan id "${idPengurus}" tidak ditemukan.`);
   if (pengurus.userId) throw new Error(`${pengurus.nama} sudah punya akun.`);
 
@@ -42,13 +38,11 @@ async function main() {
   tanya.close();
   if (sandi.length < 8) throw new Error("Kata sandi minimal 8 karakter.");
 
-  // Better Auth yang meng-hash kata sandi dan membuat baris user + account.
   const { user } = await authSkrip.api.signUpEmail({ body: { name: pengurus.nama, email, password: sandi } });
   await prisma.pengurus.update({ where: { id: pengurus.id }, data: { userId: user.id } });
-  // signUpEmail otomatis membuat sesi login; tidak dipakai, jadi dihapus.
   await prisma.session.deleteMany({ where: { userId: user.id } });
 
-  console.log(`\nAkun dibuat: ${email} untuk ${pengurus.nama} (${pengurus.jabatan}, peran ${pengurus.peran}).`);
+  console.log(`\nAkun dibuat: ${email} untuk ${pengurus.nama} (${pengurus.jabatan}, level ${pengurus.level.nama}).`);
   console.log("Silakan masuk di http://localhost:3000/masuk");
 }
 

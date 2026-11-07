@@ -6,12 +6,11 @@ import { X } from "lucide-react";
 import { LabelMelayang } from "@/components/LabelMelayang";
 import { TombolAkunSaya } from "@/components/TombolAkunSaya";
 import { TombolKeluar } from "@/components/TombolKeluar";
-import { boleh } from "@/lib/hak-akses";
-import type { Peran } from "@/lib/kepengurusan";
+import { boleh, type HakPengguna } from "@/lib/hak-akses";
 import { kelompokMenu, menuAktif } from "@/lib/menu";
 
 // Data pengguna yang sedang masuk, dikirim dari layout (server) yang sudah memeriksa sesinya.
-export type InfoPengguna = { nama: string; jabatan: string; wilayah: string; peran: Peran };
+export type InfoPengguna = { nama: string; jabatan: string; wilayah: string } & HakPengguna;
 
 // "use client" karena butuh usePathname untuk menandai menu yang sedang dibuka.
 // State lebar/ciut dan laci HP disimpan di KerangkaPengurus, karena navbar juga memakainya.
@@ -42,7 +41,7 @@ function IsiSidebar({ ciut, pengguna, saatNavigasi }: { ciut: boolean; pengguna:
       <nav className="mt-4 flex flex-col gap-4">
         {/* Hanya menu yang boleh dilihat peran ini (server tetap memeriksa ulang di tiap halaman) */}
         {kelompokMenu
-          .map((k) => ({ ...k, item: k.item.filter((m) => boleh(pengguna.peran, m.fitur, "lihat")) }))
+          .map((k) => ({ ...k, item: k.item.filter((m) => boleh(pengguna, m.fitur, "lihat")) }))
           .filter((k) => k.item.length > 0)
           .map((kelompok, i) => (
           <div key={kelompok.judul} className="flex flex-col gap-1">

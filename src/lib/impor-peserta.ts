@@ -4,7 +4,7 @@
 
 import { kategoriPeserta, periksaIsianPeserta, type IsianPeserta } from "./peserta";
 
-export const KOLOM_IMPOR = ["Nama lengkap", "Jenis kelamin", "Wilayah", "Tanggal lahir", "No HP"] as const;
+export const KOLOM_IMPOR = ["Nama lengkap", "Jenis kelamin", "Kelompok", "Tanggal lahir", "No HP"] as const;
 
 export type BarisImpor = {
   nomorBaris: number; // nomor baris di Excel, supaya pengurus mudah mencarinya
@@ -77,7 +77,7 @@ export function periksaBarisImpor(baris: unknown[][], hariIni: string, sudahAda:
   const k = {
     nama: cariKolom(judul, ["nama"]),
     jk: cariKolom(judul, ["jenis", "kelamin", "jk"]),
-    wilayah: cariKolom(judul, ["wilayah", "bendlay"]),
+    wilayah: cariKolom(judul, ["kelompok", "wilayah", "bendlay"]),
     lahir: cariKolom(judul, ["lahir"]),
     hp: cariKolom(judul, ["hp", "telepon", "wa"]),
   };
@@ -110,7 +110,7 @@ export function periksaBarisImpor(baris: unknown[][], hariIni: string, sudahAda:
     const galat = periksaIsianPeserta(isian, hariIni);
     const masalah = Object.values(galat).filter((g): g is string => Boolean(g));
     if (galat.jenisKelamin && mentahJk) masalah.splice(masalah.indexOf(galat.jenisKelamin), 1, `Jenis kelamin "${mentahJk}" tidak dikenali, tulis Putra atau Putri`);
-    if (galat.wilayah && mentahWilayah) masalah.splice(masalah.indexOf(galat.wilayah), 1, `Wilayah "${mentahWilayah}" tidak dikenali, tulis Bendlay 2 atau Bendlay 4`);
+    if (galat.wilayah && mentahWilayah) masalah.splice(masalah.indexOf(galat.wilayah), 1, `Kelompok "${mentahWilayah}" tidak dikenali, tulis Bendlay 2 atau Bendlay 4`);
 
     const kunciBaris = kunci(isian.nama, isian.tanggalLahir);
     if (!galat.nama && !galat.tanggalLahir) {

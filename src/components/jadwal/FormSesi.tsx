@@ -1,10 +1,10 @@
 "use client";
 
 import { useRef, useState, type FormEvent } from "react";
-import { HasilSimpan } from "@/components/Dialog";
+import { LoaderCircle } from "lucide-react";
+import { simpanSesi } from "@/app/(pengurus)/jadwal/aksi";
 import { PilihanSegmen } from "@/components/PilihanSegmen";
-import { labelJenisKelamin } from "@/lib/peserta";
-import { formatTanggal, labelSasaran, periksaIsianSesi, type GalatSesi, type IsianSesi, type Sesi } from "@/lib/sesi";
+import { periksaIsianSesi, type GalatSesi, type IsianSesi, type Sesi } from "@/lib/sesi";
 
 // Satu form untuk dua keperluan:
 // - tanpa `sesi`: tambah sesi baru (pilih tanggal dan putra/putri, materi boleh menyusul)
@@ -22,7 +22,8 @@ export function FormSesi({
 }) {
   const baru = sesi === undefined;
   const [galat, setGalat] = useState<GalatSesi>({});
-  const [hasil, setHasil] = useState<IsianSesi | null>(null);
+  const [pesanUmum, setPesanUmum] = useState<string>();
+  const [proses, setProses] = useState(false);
   const kolomPemateri = useRef<HTMLElement & { value: string }>(null);
 
   function saatMengisi(e: FormEvent<HTMLFormElement>) {
@@ -36,7 +37,7 @@ export function FormSesi({
     setGalat((g) => ({ ...g, pemateri: undefined }));
   }
 
-  function saatSimpan(e: FormEvent<HTMLFormElement>) {
+  async function saatSimpan(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const data = new FormData(e.currentTarget);
     const isian: IsianSesi = {
@@ -48,34 +49,26 @@ export function FormSesi({
       pemateri: String(data.get("pemateri") ?? ""),
     };
 
+    // 1) Pemeriksaan cepat di browser; 2) simpan lewat Server Action yang memeriksa ulang.
     const galatBaru = periksaIsianSesi(isian, hariIni, baru);
     setGalat(galatBaru);
+    setPesanUmum(undefined);
     if (Object.keys(galatBaru).length > 0) return;
 
-    // Database belum tersambung. Di sini nanti memanggil Server Action untuk menyimpan.
-    setHasil(isian);
-  }
-
-  if (hasil) {
-    return (
-      <HasilSimpan judul={baru ? "Sesi baru siap ditambahkan" : "Materi siap disimpan"} tutup={selesai}>
-        <dl className="grid grid-cols-[auto_1fr] gap-x-6 gap-y-1.5 text-sm">
-          <dt className="text-on-surface-variant">Tanggal</dt>
-          <dd className="font-semibold">
-            {formatTanggal(hasil.tanggal)}, {hasil.jamMulai}
-          </dd>
-          <dt className="text-on-surface-variant">Kelompok</dt>
-          <dd className="font-semibold">
-            {labelJenisKelamin[hasil.jenisKelamin as "putra" | "putri"]} ·{" "}
-            {labelSasaran[hasil.sasaran as keyof typeof labelSasaran]}
-          </dd>
-          <dt className="text-on-surface-variant">Materi</dt>
-          <dd className="font-semibold">{hasil.materi.trim() || "Diisi nanti"}</dd>
-          <dt className="text-on-surface-variant">Pemateri</dt>
-          <dd className="font-semibold">{hasil.pemateri.trim() || "Diisi nanti"}</dd>
-        </dl>
-      </HasilSimpan>
-    );
+    setProses(true);
+    try {
+      const hasil = await simpanSesi(sesi?.id ?? null, data);
+      if (!hasil.ok) {
+        setGalat(hasil.galat ?? {});
+        setPesanUmum(hasil.pesan);
+        return;
+      }
+      selesai(); // halaman ikut diperbarui oleh revalidatePath di server
+    } catch {
+      setPesanUmum("Gagal menyimpan. Periksa koneksi internet lalu coba lagi.");
+    } finally {
+      setProses(false);
+    }
   }
 
   return (
@@ -164,11 +157,20 @@ export function FormSesi({
         className="w-full sm:max-w-48"
       />
 
+      {pesanUmum && (
+        <p role="alert" className="rounded-2xl bg-error-container px-4 py-3 text-sm text-on-error-container">
+          {pesanUmum}
+        </p>
+      )}
+
       <div className="flex justify-end gap-2">
         <md-text-button type="button" onClick={selesai}>
           Batal
         </md-text-button>
-        <md-filled-button type="submit">{baru ? "Tambah sesi" : "Simpan materi"}</md-filled-button>
+        <md-filled-button has-icon={proses} type="submit" disabled={proses}>
+          {proses && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
+          {proses ? "Menyimpan..." : baru ? "Tambah sesi" : "Simpan materi"}
+        </md-filled-button>
       </div>
     </form>
   );

@@ -139,11 +139,11 @@ export function FormMasukPeserta() {
         />
         {galat && <span className="px-1 text-xs text-error">{galat}</span>}
       </label>
-      <md-filled-button type="submit">
+      <md-filled-button has-icon type="submit">
         <MessageCircle slot="icon" size={18} />
         Kirim kode lewat WhatsApp
       </md-filled-button>
-      <p className="text-center text-xs text-on-surface-variant">Pakai nomor yang terdaftar di pengurus. Belum terdaftar? Hubungi pengurus wilayahmu.</p>
+      <p className="text-center text-xs text-on-surface-variant">Pakai nomor yang terdaftar di pengurus. Belum terdaftar? Hubungi pengurus kelompokmu.</p>
     </form>
   );
 }

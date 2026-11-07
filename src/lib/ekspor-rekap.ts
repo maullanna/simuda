@@ -93,7 +93,7 @@ export async function buatExcelRekap(data: DataEksporRekap): Promise<Blob> {
     { header: "No", key: "no", width: 6 },
     { header: "Nama", key: "nama", width: 30 },
     { header: "Kelompok", key: "kelompok", width: 11 },
-    { header: "Wilayah", key: "wilayah", width: 12 },
+    { header: "Kelompok", key: "wilayah", width: 12 },
     { header: "Kategori", key: "kategori", width: 12 },
     { header: "Sesi", key: "sesi", width: 8 },
     { header: "Hadir", key: "hadir", width: 8 },

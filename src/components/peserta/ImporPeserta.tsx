@@ -56,7 +56,7 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
       "Cara mengisi:",
       "1. Isi satu peserta per baris di sheet \"Peserta\". Hapus dua baris contoh sebelum mengunggah.",
       "2. Jenis kelamin: Putra atau Putri.",
-      "3. Wilayah: Bendlay 2 atau Bendlay 4.",
+      "3. Kelompok: Bendlay 2 atau Bendlay 4.",
       "4. Tanggal lahir: 17/08/2009 atau 2009-08-17. Kategori pra-remaja/remaja/pra-nikah dihitung otomatis.",
       "5. No HP boleh dikosongkan.",
     ].forEach((t) => petunjuk.addRow([t]));
@@ -147,7 +147,7 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
           <h2 className="font-extrabold">Isi template Excel</h2>
           <p className="text-sm text-on-surface-variant">Kolom: {KOLOM_IMPOR.join(", ")}. Kategori pra-remaja/remaja/pra-nikah tidak perlu diisi.</p>
           <div>
-            <md-outlined-button type="button" onClick={unduhTemplate}>
+            <md-outlined-button has-icon type="button" onClick={unduhTemplate}>
               <Download slot="icon" size={18} />
               Unduh template
             </md-outlined-button>
@@ -225,7 +225,7 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
                   <th className="px-3 py-2.5">Baris</th>
                   <th className="px-3 py-2.5">Nama</th>
                   <th className="hidden px-3 py-2.5 sm:table-cell">Kelompok</th>
-                  <th className="hidden px-3 py-2.5 md:table-cell">Wilayah</th>
+                  <th className="hidden px-3 py-2.5 md:table-cell">Kelompok</th>
                   <th className="hidden px-3 py-2.5 md:table-cell">Tanggal lahir</th>
                   <th className="px-3 py-2.5">Status</th>
                 </tr>
@@ -275,7 +275,7 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
             {bermasalah > 0 && siap.length > 0 && (
               <p className="mr-auto text-xs text-on-surface-variant">Baris yang perlu diperbaiki tidak ikut diimpor.</p>
             )}
-            <md-text-button type="button" onClick={ulang}>
+            <md-text-button has-icon type="button" onClick={ulang}>
               <RotateCcw slot="icon" size={16} />
               Mulai ulang
             </md-text-button>

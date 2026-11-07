@@ -4,7 +4,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { FormPeserta } from "@/components/FormPeserta";
 import { PanelKartu } from "@/components/peserta/PanelKartu";
+import { ambilBiodata } from "@/lib/data/biodata";
 import { ambilKartuAktif, ambilPeserta, keTeksTanggal } from "@/lib/data/peserta";
+import { boleh } from "@/lib/hak-akses";
 import { requireRole } from "@/lib/pengguna";
 import { tanggalHariIniWib } from "@/lib/peserta";
 
@@ -15,12 +17,14 @@ export const metadata: Metadata = {
 // [id] di nama folder berarti bagian URL itu berubah-ubah:
 // /peserta/p03/ubah membuka halaman ini dengan id = "p03".
 export default async function UbahPesertaPage(props: PageProps<"/peserta/[id]/ubah">) {
-  await requireRole("peserta", "ubah");
+  const pengguna = await requireRole("peserta", "ubah");
   const { id } = await props.params;
   const peserta = await ambilPeserta(id);
   if (!peserta) notFound();
   const hariIni = tanggalHariIniWib();
-  const kartu = await ambilKartuAktif(peserta.id);
+  const bolehBiodata = boleh(pengguna, "biodata", "ubah");
+  // Biodata sensitif hanya dimuat untuk yang berhak (KONSEP 5.1b).
+  const [kartu, biodata] = await Promise.all([ambilKartuAktif(peserta.id), bolehBiodata ? ambilBiodata(peserta.id) : undefined]);
 
   return (
     <div className="flex flex-col gap-6">
@@ -34,7 +38,7 @@ export default async function UbahPesertaPage(props: PageProps<"/peserta/[id]/ub
         <h1 className="text-2xl font-extrabold lg:text-3xl">Ubah peserta</h1>
         <p className="text-on-surface-variant">{peserta.nama}</p>
       </header>
-      <FormPeserta peserta={peserta} hariIni={hariIni} />
+      <FormPeserta peserta={peserta} hariIni={hariIni} bolehBiodata={bolehBiodata} biodata={biodata} />
       {/* Hanya peserta aktif yang punya kartu berlaku */}
       {peserta.status === "aktif" && kartu ? (
         <PanelKartu pesertaId={peserta.id} nama={peserta.nama} dibuat={keTeksTanggal(kartu.dibuatAt)} hariIni={hariIni} />

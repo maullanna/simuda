@@ -40,7 +40,7 @@ export function TombolKabariIzin({ opsi, varian = "tonal" }: { opsi: OpsiIzinPes
   return (
     <>
       {varian === "tonal" ? (
-        <md-filled-tonal-button type="button" onClick={buka} disabled={opsi.length === 0}>
+        <md-filled-tonal-button has-icon type="button" onClick={buka} disabled={opsi.length === 0}>
           <HeartHandshake slot="icon" size={18} />
           Kabari izin
         </md-filled-tonal-button>
@@ -126,7 +126,7 @@ export function TombolKabariIzin({ opsi, varian = "tonal" }: { opsi: OpsiIzinPes
               {galat && <p className="px-1 text-xs text-error">{galat}</p>}
             </fieldset>
 
-            <md-filled-button type="submit">
+            <md-filled-button has-icon type="submit">
               <Send slot="icon" size={16} />
               Kirim
             </md-filled-button>

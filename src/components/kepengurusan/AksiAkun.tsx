@@ -48,6 +48,7 @@ function KataSandiJadi({ judul, email, sandi, tutup }: { judul: string; email: s
       </p>
       <div className="flex flex-wrap justify-end gap-2">
         <md-outlined-button
+          has-icon
           type="button"
           onClick={async () => {
             try {
@@ -118,7 +119,7 @@ function FormBuatAkun({ akun, tutup }: { akun: InfoAkun; tutup: () => void }) {
         <md-text-button type="button" onClick={tutup}>
           Batal
         </md-text-button>
-        <md-filled-button type="submit" disabled={proses}>
+        <md-filled-button has-icon type="submit" disabled={proses}>
           {proses ? <LoaderCircle slot="icon" size={18} className="animate-spin" /> : <UserRoundPlus slot="icon" size={18} />}
           {proses ? "Membuat..." : "Buat akun"}
         </md-filled-button>
@@ -153,7 +154,7 @@ function FormResetSandi({ akun, email, selesai }: { akun: InfoAkun; email: strin
       </div>
       <KolomKataSandi name="kataSandi" label="Kata sandi baru" nilai={sandi} ubah={setSandi} galat={galat} bolehAcak />
       <div className="flex justify-end">
-        <md-filled-tonal-button type="submit" disabled={proses}>
+        <md-filled-tonal-button has-icon type="submit" disabled={proses}>
           {proses ? <LoaderCircle slot="icon" size={18} className="animate-spin" /> : <KeyRound slot="icon" size={18} />}
           {proses ? "Menyimpan..." : "Ganti kata sandi"}
         </md-filled-tonal-button>
@@ -193,7 +194,7 @@ function BagianAkses({ akun, selesai }: { akun: InfoAkun; selesai: () => void })
       )}
       <div className="flex justify-end gap-2">
         {!akun.aktif ? (
-          <md-filled-tonal-button type="button" disabled={proses} onClick={() => ubah(true)}>
+          <md-filled-tonal-button has-icon type="button" disabled={proses} onClick={() => ubah(true)}>
             {proses ? <LoaderCircle slot="icon" size={18} className="animate-spin" /> : <RotateCcw slot="icon" size={18} />}
             Pulihkan akses
           </md-filled-tonal-button>
@@ -213,7 +214,7 @@ function BagianAkses({ akun, selesai }: { akun: InfoAkun; selesai: () => void })
             </button>
           </>
         ) : (
-          <md-text-button type="button" onClick={() => setYakin(true)}>
+          <md-text-button has-icon type="button" onClick={() => setYakin(true)}>
             <Ban slot="icon" size={18} />
             Cabut akses
           </md-text-button>

@@ -166,7 +166,7 @@ export function FilterTanggal({ hariIni }: { hariIni: string }) {
           <p className="-mt-1 px-1 text-xs text-on-surface-variant">Periode: {labelPeriode(dari <= sampai ? dari : sampai, dari <= sampai ? sampai : dari)}</p>
 
           <div className="flex justify-end gap-2">
-            <md-outlined-button type="button" onClick={() => arahkan()}>
+            <md-outlined-button has-icon type="button" onClick={() => arahkan()}>
               <RotateCcw slot="icon" size={16} />
               Reset
             </md-outlined-button>

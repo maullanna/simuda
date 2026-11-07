@@ -10,7 +10,8 @@ import { Paginasi } from "@/components/Paginasi";
 import { TombolSalinRingkasan } from "@/components/rekap/TombolSalinRingkasan";
 import { TombolUnduhRekap } from "@/components/rekap/TombolUnduhRekap";
 import type { DataEksporRekap } from "@/lib/ekspor-rekap";
-import { daftarPeserta, dataAbsensiContoh } from "@/lib/mock";
+import { ambilDataAbsensi } from "@/lib/data/absensi";
+import { ambilSemuaPeserta } from "@/lib/data/peserta";
 import { potongHalaman } from "@/lib/halaman";
 import { bacaPeriode } from "@/lib/periode";
 import { DAFTAR_KATEGORI, kategoriPeserta, labelJenisKelamin, labelKategori, tanggalHariIniWib, type Kategori } from "@/lib/peserta";
@@ -53,7 +54,7 @@ export default async function RekapPage(props: PageProps<"/rekap">) {
   await requireRole("rekap", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
-  const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
+  const [{ sesi, kehadiran }, daftarPeserta] = await Promise.all([ambilDataAbsensi(), ambilSemuaPeserta()]);
 
   const sp = await props.searchParams;
   const periode = bacaPeriode(sp.dari, sp.sampai, hariIni);
@@ -311,7 +312,7 @@ export default async function RekapPage(props: PageProps<"/rekap">) {
                           </p>
                         </div>
                         {wa ? (
-                          <md-filled-tonal-button href={`https://wa.me/${wa}?text=${encodeURIComponent(pesan)}`} target="_blank">
+                          <md-filled-tonal-button has-icon href={`https://wa.me/${wa}?text=${encodeURIComponent(pesan)}`} target="_blank">
                             <MessageCircle slot="icon" size={16} />
                             WhatsApp
                           </md-filled-tonal-button>

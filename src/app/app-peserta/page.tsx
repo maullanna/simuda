@@ -102,7 +102,7 @@ export default async function BerandaPesertaPage() {
             </p>
           ) : (
             <div className="flex flex-wrap gap-2">
-              <md-filled-button href="/app-peserta/kartu">
+              <md-filled-button has-icon href="/app-peserta/kartu">
                 <QrCode slot="icon" size={18} />
                 Buka kartu
               </md-filled-button>

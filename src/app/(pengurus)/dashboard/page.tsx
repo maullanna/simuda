@@ -8,7 +8,9 @@ import { HeroBeranda } from "@/components/beranda/HeroBeranda";
 import { KalenderPekan } from "@/components/beranda/KalenderPekan";
 import { KartuSaldo } from "@/components/beranda/KartuSaldo";
 import { BarisStat, KotakStat } from "@/components/beranda/KotakStat";
-import { daftarPeserta, dataAbsensiContoh, dataSodaqohContoh } from "@/lib/mock";
+import { ambilDataAbsensi } from "@/lib/data/absensi";
+import { ambilSemuaPeserta } from "@/lib/data/peserta";
+import { dataSodaqohContoh } from "@/lib/mock";
 import { requireRole } from "@/lib/pengguna";
 import { akhirBulan, awalBulan, bacaPeriode } from "@/lib/periode";
 import { DAFTAR_KATEGORI, kategoriPeserta, labelKategori, tanggalHariIniWib } from "@/lib/peserta";
@@ -32,7 +34,7 @@ export default async function DashboardPage(props: PageProps<"/dashboard">) {
   const pengguna = await requireRole("beranda", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
-  const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
+  const [{ sesi, kehadiran }, daftarPeserta] = await Promise.all([ambilDataAbsensi(), ambilSemuaPeserta()]);
   const ringkas = (s: (typeof sesi)[number]) => ringkasKehadiran(s, daftarPeserta, kehadiran);
 
   // Hari ini

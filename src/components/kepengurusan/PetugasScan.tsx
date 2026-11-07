@@ -73,7 +73,7 @@ export function PetugasScan({ peserta, petugas, bolehKelola }: { peserta: CalonP
           <p className="text-sm text-on-surface-variant">Muda/i yang bertugas memindai kartu, digilir. Hanya bisa membuka layar Scanner.</p>
         </div>
         {bolehKelola && (
-          <md-filled-tonal-button type="button" onClick={() => setTerbuka(true)}>
+          <md-filled-tonal-button has-icon type="button" onClick={() => setTerbuka(true)}>
             <UserPlus slot="icon" size={18} />
             Tambah petugas
           </md-filled-tonal-button>
@@ -159,7 +159,7 @@ export function PetugasScan({ peserta, petugas, bolehKelola }: { peserta: CalonP
             <md-text-button type="button" onClick={() => setTerbuka(false)}>
               Batal
             </md-text-button>
-            <md-filled-button type="button" disabled={pilihan.length === 0 || proses === "tambah"} onClick={tambah}>
+            <md-filled-button has-icon={proses === "tambah"} type="button" disabled={pilihan.length === 0 || proses === "tambah"} onClick={tambah}>
               {proses === "tambah" && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
               Jadikan petugas{pilihan.length ? ` (${pilihan.length})` : ""}
             </md-filled-button>

@@ -12,8 +12,8 @@ export default async function PengurusLayout({ children }: { children: React.Rea
   // halaman/aksi: layout tidak dirender ulang setiap pindah halaman, lihat src/lib/pengguna.ts).
   const pengguna = await ambilPenggunaMasuk();
   if (!pengguna) redirect("/masuk");
-  // Petugas scan hanya boleh membuka layar Scanner (KONSEP bagian 3).
-  if (pengguna.peran === "petugas_scan") redirect("/scan");
+  // Hak per halaman diperiksa requireRole() di tiap halaman; yang tidak berhak (misalnya petugas scan
+  // membuka Beranda) dialihkan ke halaman awal sesuai levelnya.
 
   // Ukuran sidebar (lebar/ciut) diingat lewat cookie. Dibaca di server supaya
   // tampilan pertama sudah benar, tidak lebar dulu lalu tiba-tiba menciut.
@@ -23,7 +23,13 @@ export default async function PengurusLayout({ children }: { children: React.Rea
     <KerangkaPengurus
       ciutAwal={ciut}
       hariIni={tanggalHariIniWib()}
-      pengguna={{ nama: pengguna.nama, jabatan: pengguna.jabatan, wilayah: pengguna.wilayah, peran: pengguna.peran }}
+      pengguna={{
+        nama: pengguna.nama,
+        jabatan: pengguna.jabatan,
+        wilayah: pengguna.wilayah,
+        aksesPenuh: pengguna.aksesPenuh,
+        hak: pengguna.hak,
+      }}
     >
       {children}
     </KerangkaPengurus>

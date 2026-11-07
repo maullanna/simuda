@@ -5,6 +5,7 @@ import {
   LayoutDashboard,
   MessagesSquare,
   Network,
+  ShieldCheck,
   ScanLine,
   Users,
   Wallet,
@@ -35,6 +36,7 @@ export const kelompokMenu: { judul: string; item: ItemMenu[] }[] = [
       { label: "Musyawarah", href: "/musyawarah", ikon: MessagesSquare, fitur: "musyawarah" },
       { label: "Masukan", href: "/masukan", ikon: Inbox, fitur: "masukan" },
       { label: "Kepengurusan", href: "/kepengurusan", ikon: Network, fitur: "pengurus" },
+      { label: "Level pengguna", href: "/level-pengguna", ikon: ShieldCheck, fitur: "levelPengguna" },
     ],
   },
 ];

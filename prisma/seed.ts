@@ -34,7 +34,11 @@ async function main() {
 
   await prisma.$transaction(
     async (tx) => {
+      // audit_log dijaga trigger (hanya boleh ditambah). Khusus seed data CONTOH, penjaganya dimatikan
+      // sebentar di dalam transaksi ini (hanya bisa oleh pemilik database), lalu langsung dinyalakan lagi.
+      await tx.$executeRaw`ALTER TABLE "audit_log" DISABLE TRIGGER USER`;
       await tx.auditLog.deleteMany();
+      await tx.$executeRaw`ALTER TABLE "audit_log" ENABLE TRIGGER USER`;
       await tx.tindakLanjut.deleteMany();
       await tx.musyawarah.deleteMany();
       await tx.masukan.deleteMany();
@@ -71,7 +75,7 @@ async function main() {
             nama: p.nama,
             jabatan: p.jabatan,
             wilayah: wilayahPengurusDb(p.wilayah),
-            peran: p.peran,
+            levelId: `lvl_${p.peran}`, // level bawaan dibuat oleh migrasi level_pengguna
           })),
           ...petugasScanContoh.map((pesertaId) => {
             const p = daftarPeserta.find((x) => x.id === pesertaId)!;
@@ -81,7 +85,7 @@ async function main() {
               nama: p.nama,
               jabatan: "Petugas scan",
               wilayah: wilayahPengurusDb(p.wilayah),
-              peran: "petugas_scan" as const,
+              levelId: "lvl_petugas_scan",
             };
           }),
         ],
@@ -107,7 +111,7 @@ async function main() {
         data: sesi.flatMap((s) =>
           (s.lampiran ?? []).map((l) => ({
             sesiId: s.id,
-            url: `/contoh-lampiran/${l.nama}`, // file sungguhan belum ada; nanti alamat dari storage
+            url: `/contoh-lampiran/${l.nama}`, 
             namaFile: l.nama,
             tipe: l.tipe,
           })),

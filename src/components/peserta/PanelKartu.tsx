@@ -67,12 +67,12 @@ export function PanelKartu({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <md-filled-tonal-button href={urlCetak}>
+        <md-filled-tonal-button has-icon href={urlCetak}>
           <Printer slot="icon" size={18} />
           {diganti ? "Cetak kartu baru" : "Cetak ulang kartu"}
         </md-filled-tonal-button>
         {!diganti && (
-          <md-outlined-button type="button" onClick={() => setTerbuka(true)}>
+          <md-outlined-button has-icon type="button" onClick={() => setTerbuka(true)}>
             <RefreshCw slot="icon" size={18} />
             Kartu hilang / rusak
           </md-outlined-button>
@@ -122,7 +122,7 @@ export function PanelKartu({
             <md-text-button type="button" onClick={() => setTerbuka(false)}>
               Batal
             </md-text-button>
-            <md-filled-button type="button" onClick={ganti} disabled={proses}>
+            <md-filled-button has-icon={proses} type="button" onClick={ganti} disabled={proses}>
               {proses && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
               {proses ? "Memproses..." : "Nonaktifkan & buat kartu baru"}
             </md-filled-button>

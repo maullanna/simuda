@@ -2,7 +2,7 @@
 // Nanti semua ini diganti dengan data dari Prisma.
 
 import { formatRupiah } from "./format";
-import type { Pengurus } from "./kepengurusan";
+import type { KodeLevel } from "./hak-akses";
 import type { Masukan } from "./masukan";
 import type { Musyawarah, TindakLanjut } from "./musyawarah";
 import type { Peserta } from "./peserta";
@@ -184,9 +184,10 @@ export function dataAbsensiContoh(hariIni: string): { sesi: Sesi[]; kehadiran: K
 
 // ---------------------------------------------------------------------------
 // Pengurus contoh. Dipakai untuk penghitung sodaqoh, musyawarah, dan kepengurusan.
-// peran: kyai / wakil / ketua / sekretaris / bendahara / pengurus (KONSEP bagian 3)
+// peran = kode level bawaan (KONSEP 3.1); di database menjadi level_id "lvl_<kode>".
+type PengurusContoh = { id: string; nama: string; jabatan: string; wilayah: string; peran: KodeLevel };
 
-export const daftarPengurus: Pengurus[] = [
+export const daftarPengurus: PengurusContoh[] = [
   { id: "g01", nama: "KH. Abdullah Faqih", jabatan: "Kyai", wilayah: "Pimpinan", peran: "kyai" },
   { id: "g02", nama: "Ust. Hasan Basri", jabatan: "Wakil", wilayah: "Pimpinan", peran: "wakil" },
   { id: "g03", nama: "Muhammad Iqbal", jabatan: "Ketua", wilayah: "Bendlay 2", peran: "ketua" },
@@ -318,7 +319,7 @@ export function dataMusyawarahContoh(hariIni: string): { musyawarah: Musyawarah[
       tanggal: t(6),
       jam: "20:00",
       lokasi: "Aula masjid Bendlay 2",
-      agenda: ["Evaluasi absensi dengan kartu QR", "Persiapan peringatan Maulid", "Pembagian petugas scan bulan depan"],
+      agenda: ["Evaluasi absensi dengan kartu QR", "Persiapan pengajian gabungan", "Pembagian petugas scan bulan depan"],
       hasil: [],
       notulis: "Ahmad Fauzi",
       status: "terjadwal",

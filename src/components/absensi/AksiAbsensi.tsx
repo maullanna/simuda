@@ -15,7 +15,7 @@ export function TombolInputManual({ judulSesi, peserta }: { judulSesi: string; p
   const [terbuka, setTerbuka] = useState(false);
   return (
     <>
-      <md-outlined-button type="button" onClick={() => setTerbuka(true)}>
+      <md-outlined-button has-icon type="button" onClick={() => setTerbuka(true)}>
         <PencilLine slot="icon" size={18} />
         Input manual
       </md-outlined-button>
@@ -30,7 +30,7 @@ export function TombolTutupSesi({ judulSesi, peserta }: { judulSesi: string; pes
   const [terbuka, setTerbuka] = useState(false);
   return (
     <>
-      <md-text-button type="button" onClick={() => setTerbuka(true)}>
+      <md-text-button has-icon type="button" onClick={() => setTerbuka(true)}>
         <CalendarX2 slot="icon" size={18} />
         Tutup sesi
       </md-text-button>

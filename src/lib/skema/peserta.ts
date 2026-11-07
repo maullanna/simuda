@@ -12,7 +12,7 @@ export function skemaPeserta(hariIni: string) {
       .max(100, { error: "Nama terlalu panjang" })
       .transform((s) => s.replace(/\s+/g, " ")),
     jenisKelamin: z.enum(["putra", "putri"], { error: "Pilih putra atau putri" }),
-    wilayah: z.enum(["Bendlay 2", "Bendlay 4"], { error: "Pilih wilayah" }),
+    wilayah: z.enum(["Bendlay 2", "Bendlay 4"], { error: "Pilih kelompok" }),
     tanggalLahir: z.iso
       .date({ error: "Isi tanggal lahir" })
       .refine((t) => t <= hariIni, { error: "Tanggal lahir tidak boleh setelah hari ini" }),

@@ -3,7 +3,7 @@
 import "server-only";
 import type { WilayahPengurus } from "@/generated/prisma/enums";
 import { prisma } from "@/lib/db";
-import type { Peran } from "@/lib/kepengurusan";
+import type { LevelRingkas } from "@/lib/kepengurusan";
 
 export const labelWilayahPengurus: Record<WilayahPengurus, string> = {
   pimpinan: "Pimpinan",
@@ -20,7 +20,8 @@ export type PengurusTampil = {
   nama: string;
   jabatan: string;
   wilayah: string;
-  peran: Peran;
+  levelId: string;
+  level: LevelRingkas & { kode: string | null };
   aktif: boolean; // false = akses dicabut
   email: string | null; // null = belum punya akun login
   pesertaId: string | null; // terisi untuk petugas scan
@@ -29,16 +30,26 @@ export type PengurusTampil = {
 export async function ambilSemuaPengurus(): Promise<PengurusTampil[]> {
   const semua = await prisma.pengurus.findMany({
     orderBy: [{ wilayah: "asc" }, { dibuatAt: "asc" }],
-    include: { user: { select: { email: true } } },
+    include: { user: { select: { email: true } }, level: { select: { id: true, nama: true, kode: true, aksesPenuh: true } } },
   });
   return semua.map((p) => ({
     id: p.id,
     nama: p.nama,
     jabatan: p.jabatan,
     wilayah: labelWilayahPengurus[p.wilayah],
-    peran: p.peran,
+    levelId: p.levelId,
+    level: p.level,
     aktif: p.aktif,
     email: p.user?.email ?? null,
     pesertaId: p.pesertaId,
   }));
+}
+
+// Semua level untuk pilihan di form pengurus. Level Administrator ikut dikirim, tapi form hanya
+// menampilkannya kepada Administrator (server juga menolak kalau bukan Administrator).
+export async function ambilSemuaLevel(): Promise<(LevelRingkas & { kode: string | null })[]> {
+  return prisma.levelPengguna.findMany({
+    orderBy: [{ aksesPenuh: "desc" }, { dibuatAt: "asc" }],
+    select: { id: true, nama: true, kode: true, aksesPenuh: true },
+  });
 }

@@ -22,7 +22,7 @@ export default function TerjadiKendala({ error, retry }: { error: Error & { dige
         {/* Kode ini mencocokkan error dengan catatan di server, tanpa membuka detail yang sensitif */}
         {error.digest && <p className="mt-3 text-xs text-on-surface-variant">Kode kendala: {error.digest}</p>}
       </div>
-      <md-filled-button type="button" onClick={() => retry()}>
+      <md-filled-button has-icon type="button" onClick={() => retry()}>
         <RotateCcw slot="icon" size={18} />
         Coba lagi
       </md-filled-button>

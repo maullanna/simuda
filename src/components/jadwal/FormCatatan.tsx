@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useRef, useState, type DragEvent, type FormEvent } from "react";
-import { FileText, Image as IkonFoto, Upload, X } from "lucide-react";
-import { HasilSimpan } from "@/components/Dialog";
+import { FileText, Image as IkonFoto, LoaderCircle, Upload, X } from "lucide-react";
+import { simpanCatatan } from "@/app/(pengurus)/jadwal/aksi";
 import { formatUkuran } from "@/lib/format";
 import {
   BATAS_LAMPIRAN,
@@ -14,8 +14,12 @@ import {
 
 type FileBaru = { id: string; file: File; pratinjau: string | null };
 
+// Unggah lampiran menunggu tempat penyimpanan file (storage). Sampai itu tersedia, area unggah
+// disembunyikan supaya tidak ada yang mengira fotonya sudah tersimpan.
+const UNGGAH_AKTIF = false;
+
 // Form catatan pengajian beserta lampiran foto/PDF.
-// File belum diunggah ke mana pun; hanya ditampilkan di browser sampai storage tersambung.
+// Catatan tersimpan ke database; lampiran menyusul (lihat UNGGAH_AKTIF).
 export function FormCatatan({ sesi, selesai }: { sesi: Sesi; selesai: () => void }) {
   const [catatan, setCatatan] = useState(sesi.catatan ?? "");
   const [lama, setLama] = useState<Lampiran[]>(sesi.lampiran ?? []);
@@ -23,7 +27,7 @@ export function FormCatatan({ sesi, selesai }: { sesi: Sesi; selesai: () => void
   const [galatCatatan, setGalatCatatan] = useState<string>();
   const [galatFile, setGalatFile] = useState<string[]>([]);
   const [diseret, setDiseret] = useState(false);
-  const [tersimpan, setTersimpan] = useState(false);
+  const [proses, setProses] = useState(false);
   const inputFile = useRef<HTMLInputElement>(null);
 
   // URL pratinjau foto disimpan di memori browser. Saat form ditutup, semuanya dilepas.
@@ -76,7 +80,7 @@ export function FormCatatan({ sesi, selesai }: { sesi: Sesi; selesai: () => void
     tambahFile(e.dataTransfer.files);
   }
 
-  function saatSimpan(e: FormEvent<HTMLFormElement>) {
+  async function saatSimpan(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const isi = catatan.trim();
     if (isi.length < PANJANG_CATATAN.min) {
@@ -87,17 +91,16 @@ export function FormCatatan({ sesi, selesai }: { sesi: Sesi; selesai: () => void
       setGalatCatatan(`Catatan maksimal ${PANJANG_CATATAN.maks} huruf`);
       return;
     }
-    // Database dan storage belum tersambung. Di sini nanti file diunggah lalu catatan disimpan.
-    setTersimpan(true);
-  }
-
-  if (tersimpan) {
-    return (
-      <HasilSimpan judul="Catatan siap disimpan" tutup={selesai}>
-        <p className="line-clamp-4 text-sm leading-relaxed">{catatan.trim()}</p>
-        <p className="text-sm text-on-surface-variant">{jumlahLampiran} lampiran</p>
-      </HasilSimpan>
-    );
+    setProses(true);
+    try {
+      const hasil = await simpanCatatan(sesi.id, isi);
+      if (!hasil.ok) return setGalatCatatan(hasil.pesan);
+      selesai();
+    } catch {
+      setGalatCatatan("Gagal menyimpan. Periksa koneksi internet lalu coba lagi.");
+    } finally {
+      setProses(false);
+    }
   }
 
   return (
@@ -131,7 +134,14 @@ export function FormCatatan({ sesi, selesai }: { sesi: Sesi; selesai: () => void
         </p>
       </div>
 
+      {!UNGGAH_AKTIF && (
+        <p className="rounded-2xl bg-surface-mid px-4 py-3 text-sm text-on-surface-variant">
+          Lampiran foto/PDF menyusul setelah tempat penyimpanan file tersedia. Untuk sekarang, cukup tulis catatannya.
+        </p>
+      )}
+
       {/* Area unggah: tarik file ke sini, atau klik untuk memilih */}
+      {UNGGAH_AKTIF && (
       <div className="flex flex-col gap-2">
         <p className="text-sm font-semibold text-on-surface-variant">
           Lampiran foto atau PDF ({jumlahLampiran}/{BATAS_LAMPIRAN.jumlah})
@@ -207,12 +217,16 @@ export function FormCatatan({ sesi, selesai }: { sesi: Sesi; selesai: () => void
           </ul>
         )}
       </div>
+      )}
 
       <div className="flex justify-end gap-2">
         <md-text-button type="button" onClick={selesai}>
           Batal
         </md-text-button>
-        <md-filled-button type="submit">Simpan catatan</md-filled-button>
+        <md-filled-button has-icon={proses} type="submit" disabled={proses}>
+          {proses && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
+          {proses ? "Menyimpan..." : "Simpan catatan"}
+        </md-filled-button>
       </div>
     </form>
   );

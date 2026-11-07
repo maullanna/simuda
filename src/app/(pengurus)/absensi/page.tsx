@@ -7,7 +7,8 @@ import { Paginasi } from "@/components/Paginasi";
 import { potongHalaman } from "@/lib/halaman";
 import { TombolCatatIzin, TombolInputManual, TombolTutupSesi } from "@/components/absensi/AksiAbsensi";
 import type { OpsiSesiIzin } from "@/components/absensi/FormCatatIzin";
-import { daftarPeserta, dataAbsensiContoh } from "@/lib/mock";
+import { ambilDataAbsensi } from "@/lib/data/absensi";
+import { ambilSemuaPeserta } from "@/lib/data/peserta";
 import { bacaPeriode } from "@/lib/periode";
 import { labelJenisKelamin, tanggalHariIniWib } from "@/lib/peserta";
 import { requireRole } from "@/lib/pengguna";
@@ -87,7 +88,7 @@ function KartuSesiHariIni({
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <md-filled-button href={`/scan?sesi=${sesi.id}`}>
+        <md-filled-button has-icon href={`/scan?sesi=${sesi.id}`}>
           <ScanLine slot="icon" size={18} />
           Buka scanner
         </md-filled-button>
@@ -106,7 +107,7 @@ export default async function AbsensiPage(props: PageProps<"/absensi">) {
   await requireRole("daftarHadir", "lihat");
   await connection();
   const hariIni = tanggalHariIniWib();
-  const { sesi, kehadiran } = dataAbsensiContoh(hariIni);
+  const [{ sesi, kehadiran }, daftarPeserta] = await Promise.all([ambilDataAbsensi(), ambilSemuaPeserta()]);
 
   // Riwayat mengikuti filter tanggal di navbar (?dari=...&sampai=...), bawaannya bulan ini.
   const sp = await props.searchParams;
