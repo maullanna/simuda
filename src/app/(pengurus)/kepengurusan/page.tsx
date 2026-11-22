@@ -1,22 +1,22 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ChevronRight, Crown, ShieldCheck } from "lucide-react";
+import { ChevronRight, ShieldCheck } from "lucide-react";
 import { TombolAkun } from "@/components/kepengurusan/AksiAkun";
 import { TombolTambahPengurus, TombolUbahPengurus } from "@/components/kepengurusan/AksiKepengurusan";
 import { DataKelompok } from "@/components/kepengurusan/DataKelompok";
+import { DiagramKepengurusan, type HakDiagram } from "@/components/kepengurusan/DiagramKepengurusan";
 import { PetugasScan } from "@/components/kepengurusan/PetugasScan";
 import { ambilSemuaDataKelompok } from "@/lib/data/biodata";
 import { ambilSemuaLevel, ambilSemuaPengurus, type PengurusTampil } from "@/lib/data/pengurus";
 import { ambilSemuaPeserta } from "@/lib/data/peserta";
 import { boleh } from "@/lib/hak-akses";
-import type { LevelRingkas } from "@/lib/kepengurusan";
 import { requireRole } from "@/lib/pengguna";
 
 export const metadata: Metadata = {
   title: "Kepengurusan · SIMUDA",
 };
 
-type Hak = { bolehKelola: boolean; bolehAkun: boolean; pengurusIdSaya: string; pilihanLevel: LevelRingkas[] };
+type Hak = HakDiagram;
 
 function KartuPengurus({ p, hak }: { p: PengurusTampil; hak: Hak }) {
   return (
@@ -76,7 +76,7 @@ export default async function KepengurusanPage() {
           {/* Judul sudah tampil di navbar; h1 tetap ada untuk pembaca layar */}
           <h1 className="sr-only">Kepengurusan</h1>
           <p className="text-on-surface-variant">
-            {daftarPengurus.length} pengurus · penanggung jawab: Ketua Muda/i. Peran di sistem menentukan apa yang boleh dibuka.
+            {daftarPengurus.length} pengurus · penanggung jawab: Ketua Muda/i. Level tiap pengurus menentukan apa yang boleh dibuka.
           </p>
         </div>
         {hak.bolehKelola && <TombolTambahPengurus pilihanLevel={hak.pilihanLevel} />}
@@ -96,39 +96,8 @@ export default async function KepengurusanPage() {
         </section>
       )}
 
-      {/* Pimpinan */}
-      <section className="muncul grid gap-4 sm:grid-cols-2">
-        {pimpinan.map((p) => (
-          <div
-            key={p.id}
-            className={`group flex items-center gap-4 rounded-[28px] bg-primary-container p-5 text-on-primary-container ${p.aktif ? "" : "opacity-70"}`}
-          >
-            <div className="grid size-14 shrink-0 place-items-center rounded-2xl bg-surface/60 transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover:-rotate-6 group-hover:scale-110">
-              <Crown size={24} />
-            </div>
-            <div className="flex min-w-0 flex-1 flex-col items-start gap-1">
-              <p className="text-xs font-bold uppercase tracking-wider opacity-75">{p.jabatan}</p>
-              <p className="max-w-full truncate text-lg font-extrabold">{p.nama}</p>
-              <TombolAkun akun={p} bolehKelola={hak.bolehAkun} diriSendiri={p.id === hak.pengurusIdSaya} />
-            </div>
-            {hak.bolehKelola && <TombolUbahPengurus pengurus={p} pilihanLevel={hak.pilihanLevel} />}
-          </div>
-        ))}
-      </section>
-
-      {/* Struktur per wilayah */}
-      <div className="grid gap-4 lg:grid-cols-2">
-        {perWilayah.map((g, i) => (
-          <section key={g.wilayah} className="muncul flex flex-col gap-3 rounded-[28px] bg-surface-low p-5" style={{ animationDelay: `${80 + i * 60}ms` }}>
-            <h2 className="text-lg font-extrabold">Pengurus {g.wilayah}</h2>
-            <ul className="flex flex-col gap-2">
-              {g.pengurus.map((p) => (
-                <KartuPengurus key={p.id} p={p} hak={hak} />
-              ))}
-            </ul>
-          </section>
-        ))}
-      </div>
+      {/* Bagan: pimpinan di puncak, bercabang ke kelompok Bendlay 2 dan Bendlay 4 */}
+      <DiagramKepengurusan pimpinan={pimpinan} kelompok={perWilayah} hak={hak} />
 
       <PetugasScan peserta={calonPetugas} petugas={petugas} bolehKelola={boleh(pengguna, "petugasScan", "jalankan")} />
 

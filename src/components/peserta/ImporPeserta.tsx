@@ -2,8 +2,9 @@
 
 import { useState, type DragEvent } from "react";
 import { CircleCheck, Download, FileSpreadsheet, LoaderCircle, RotateCcw, TriangleAlert, Upload } from "lucide-react";
+import { imporPeserta, type HasilImpor } from "@/app/(pengurus)/peserta/aksi";
 import { formatUkuran } from "@/lib/format";
-import { KOLOM_IMPOR, periksaBarisImpor, type BarisImpor, type PesertaAda } from "@/lib/impor-peserta";
+import { KOLOM_BIODATA_IMPOR, KOLOM_IMPOR, periksaBarisImpor, type BarisImpor, type PesertaAda } from "@/lib/impor-peserta";
 import { labelKategori, type Kategori } from "@/lib/peserta";
 import { formatTanggal } from "@/lib/sesi";
 
@@ -24,16 +25,20 @@ function unduhBlob(blob: Blob, nama: string) {
   setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
-// Impor peserta dari Excel: semua dibaca dan diperiksa di browser dulu,
-// pengurus melihat pratinjau, baru kemudian (nanti) disimpan ke database.
-export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda: PesertaAda[] }) {
+// Impor pemuda/i dari Excel: semua dibaca dan diperiksa di browser dulu (pratinjau),
+// lalu disimpan lewat Server Action imporPeserta() yang memeriksa ulang setiap baris.
+// Kolom biodata hanya diproses kalau yang mengimpor Administrator (bolehBiodata).
+export function ImporPeserta({ hariIni, sudahAda, bolehBiodata }: { hariIni: string; sudahAda: PesertaAda[]; bolehBiodata: boolean }) {
   const [file, setFile] = useState<File | null>(null);
   const [baris, setBaris] = useState<BarisImpor[]>([]);
   const [galatFile, setGalatFile] = useState<string | null>(null);
   const [proses, setProses] = useState(false);
   const [diseret, setDiseret] = useState(false);
   const [hanyaMasalah, setHanyaMasalah] = useState(false);
-  const [diimpor, setDiimpor] = useState(false);
+  const [adaKolomBiodata, setAdaKolomBiodata] = useState(false);
+  const [menyimpan, setMenyimpan] = useState(false);
+  const [hasilImpor, setHasilImpor] = useState<Extract<HasilImpor, { ok: true }> | null>(null);
+  const [galatSimpan, setGalatSimpan] = useState<string>();
 
   const siap = baris.filter((b) => b.masalah.length === 0);
   const bermasalah = baris.length - siap.length;
@@ -42,32 +47,43 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
   async function unduhTemplate() {
     const { Workbook } = await muatExcel();
     const buku = new Workbook();
-    const sheet = buku.addWorksheet("Peserta");
-    sheet.columns = KOLOM_IMPOR.map((h) => ({ header: h, width: h === "Nama lengkap" ? 30 : 16 }));
-    sheet.getRow(1).font = { bold: true, color: { argb: "FFFFFFFF" } };
-    sheet.getRow(1).fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FF2E6B30" } };
-    sheet.addRow(["Contoh Nama Putra", "Putra", "Bendlay 2", "17/08/2009", "081234567890"]);
+    const sheet = buku.addWorksheet("Pemuda-i");
+    const judul = [...KOLOM_IMPOR, ...KOLOM_BIODATA_IMPOR.map((b) => b.judul)];
+    sheet.columns = judul.map((h) => ({ header: h, width: h === "Nama lengkap" || h === "Nama ayah" ? 28 : 16 }));
+    // Kolom data diri (wajib) hijau tua, kolom biodata (boleh kosong) abu-abu.
+    sheet.getRow(1).eachCell((sel, i) => {
+      const wajib = i <= KOLOM_IMPOR.length;
+      sel.font = { bold: true, color: { argb: wajib ? "FFFFFFFF" : "FF1F2937" } };
+      sel.fill = { type: "pattern", pattern: "solid", fgColor: { argb: wajib ? "FF2E6B30" : "FFE5E7EB" } };
+    });
+    sheet.addRow(["Contoh Nama Putra", "Putra", "Bendlay 2", "17/08/2009", "081234567890", ...KOLOM_BIODATA_IMPOR.map((b) => b.contoh)]);
     sheet.addRow(["Contoh Nama Putri", "Putri", "Bendlay 4", "2004-03-21", ""]);
-    // Kolom No HP diformat teks supaya angka 0 di depan tidak hilang.
+    // No HP diformat teks supaya angka 0 di depan tidak hilang.
     sheet.getColumn(5).numFmt = "@";
     const petunjuk = buku.addWorksheet("Petunjuk");
-    petunjuk.getColumn(1).width = 90;
+    petunjuk.getColumn(1).width = 100;
     [
       "Cara mengisi:",
-      "1. Isi satu peserta per baris di sheet \"Peserta\". Hapus dua baris contoh sebelum mengunggah.",
-      "2. Jenis kelamin: Putra atau Putri.",
-      "3. Kelompok: Bendlay 2 atau Bendlay 4.",
-      "4. Tanggal lahir: 17/08/2009 atau 2009-08-17. Kategori pra-remaja/remaja/pra-nikah dihitung otomatis.",
-      "5. No HP boleh dikosongkan.",
+      "1. Isi satu orang per baris di sheet pertama. Hapus dua baris contoh sebelum mengunggah.",
+      "2. Kolom hijau WAJIB: Nama lengkap, Jenis kelamin (Putra/Putri), Kelompok (Bendlay 2/Bendlay 4), Tanggal lahir (17/08/2009 atau 2009-08-17). No HP boleh kosong.",
+      "3. Kategori pra-remaja/remaja/pra-nikah tidak perlu diisi, dihitung otomatis dari tanggal lahir.",
+      "4. Kolom abu-abu = BIODATA (untuk Tim PnKB), semuanya boleh kosong:",
+      "   - Anak ke, Jumlah saudara, Tinggi (cm), Berat (kg): angka saja.",
+      "   - Golongan darah: A, B, AB, atau O.",
+      "   - Status nikah: Belum menikah atau Menikah.",
+      "   - Pendidikan: SD, SMP, SMA, SMK, D3, D4, S1, S2, S3 (MI = SD, MTs = SMP, MA = SMA). Jurusan ditulis di kolom Jurusan.",
+      "5. Biodata hanya ikut tersimpan kalau yang mengimpor Administrator.",
+      "6. File hasil Google Form juga bisa langsung diunggah, asalkan ada kolom Jenis kelamin.",
     ].forEach((t) => petunjuk.addRow([t]));
-    unduhBlob(new Blob([await buku.xlsx.writeBuffer()]), "template-impor-peserta-simuda.xlsx");
+    unduhBlob(new Blob([await buku.xlsx.writeBuffer()]), "template-impor-pemudai-simuda.xlsx");
   }
 
   async function baca(f: File) {
     setFile(f);
     setBaris([]);
     setGalatFile(null);
-    setDiimpor(false);
+    setHasilImpor(null);
+    setGalatSimpan(undefined);
     if (!f.name.toLowerCase().endsWith(".xlsx")) {
       setGalatFile("Hanya file Excel .xlsx. Kalau masih .xls atau .csv, simpan ulang sebagai .xlsx dulu.");
       return;
@@ -91,6 +107,7 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
       }
       const hasil = periksaBarisImpor(mentah, hariIni, sudahAda);
       setBaris(hasil.baris);
+      setAdaKolomBiodata(hasil.adaKolomBiodata);
       setGalatFile(hasil.galatFile ?? null);
     } catch {
       setGalatFile("File tidak bisa dibaca. Pastikan file Excel .xlsx yang valid.");
@@ -110,23 +127,63 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
     setFile(null);
     setBaris([]);
     setGalatFile(null);
-    setDiimpor(false);
+    setHasilImpor(null);
+    setGalatSimpan(undefined);
     setHanyaMasalah(false);
   }
 
-  if (diimpor) {
+  async function simpan() {
+    setMenyimpan(true);
+    setGalatSimpan(undefined);
+    try {
+      const hasil = await imporPeserta(
+        siap.map((b) => ({
+          nomorBaris: b.nomorBaris,
+          nama: b.nama,
+          jenisKelamin: b.jenisKelamin,
+          wilayah: b.wilayah,
+          tanggalLahir: b.tanggalLahir,
+          noHp: b.noHp,
+          biodata: b.biodata,
+        })),
+      );
+      if (!hasil.ok) return setGalatSimpan(hasil.pesan);
+      setHasilImpor(hasil);
+    } catch {
+      setGalatSimpan("Gagal menyimpan. Periksa koneksi internet lalu coba lagi. Tidak ada data yang tersimpan setengah.");
+    } finally {
+      setMenyimpan(false);
+    }
+  }
+
+  if (hasilImpor) {
+    const tidakIkut = bermasalah + hasilImpor.dilewati.length;
     return (
       <section className="flex max-w-2xl flex-col gap-4 rounded-[28px] bg-surface-low p-6">
         <div className="flex items-center gap-3">
           <CircleCheck size={28} className="text-primary" />
-          <h2 className="text-xl font-extrabold">{siap.length} peserta siap diimpor</h2>
+          <h2 className="text-xl font-extrabold">{hasilImpor.jumlah} pemuda/i berhasil disimpan</h2>
         </div>
-        <p className="rounded-2xl bg-warning-container px-4 py-3 text-sm text-on-warning-container">
-          Database belum tersambung, jadi data ini <b>belum benar-benar tersimpan</b>. Setelah tersambung, setiap peserta yang diimpor
-          otomatis dibuatkan token kartu dan bisa langsung dicetak kartunya.
-        </p>
-        {bermasalah > 0 && (
-          <p className="text-sm text-on-surface-variant">{bermasalah} baris yang bermasalah tidak ikut diimpor. Perbaiki di Excel lalu unggah ulang.</p>
+        <p className="text-sm text-on-surface-variant">Setiap orang sudah dibuatkan kartu dan bisa langsung dicetak dari menu Cetak kartu.</p>
+        {hasilImpor.biodataDiabaikan && (
+          <p className="rounded-2xl bg-warning-container px-4 py-3 text-sm text-on-warning-container">
+            Kolom biodata tidak ikut tersimpan, karena biodata hanya boleh diisi oleh Administrator.
+          </p>
+        )}
+        {tidakIkut > 0 && (
+          <div className="rounded-2xl bg-surface-mid px-4 py-3 text-sm">
+            <p className="font-semibold">Tidak ikut disimpan: {tidakIkut} baris</p>
+            {hasilImpor.dilewati.length > 0 && (
+              <ul className="mt-1 list-disc pl-5 text-on-surface-variant">
+                {hasilImpor.dilewati.map((d) => (
+                  <li key={d.nomorBaris}>
+                    Baris {d.nomorBaris}: {d.alasan}
+                  </li>
+                ))}
+              </ul>
+            )}
+            <p className="mt-1 text-on-surface-variant">Perbaiki di Excel lalu unggah ulang. Yang sudah tersimpan otomatis ditandai sudah terdaftar.</p>
+          </div>
         )}
         <div className="flex flex-wrap gap-2">
           <md-filled-button href="/peserta">Kembali ke daftar</md-filled-button>
@@ -145,7 +202,10 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
         <section className="flex flex-col gap-3 rounded-[28px] bg-surface-low p-5">
           <p className="text-xs font-bold uppercase tracking-wider text-primary">Langkah 1</p>
           <h2 className="font-extrabold">Isi template Excel</h2>
-          <p className="text-sm text-on-surface-variant">Kolom: {KOLOM_IMPOR.join(", ")}. Kategori pra-remaja/remaja/pra-nikah tidak perlu diisi.</p>
+          <p className="text-sm text-on-surface-variant">
+            Kolom wajib: {KOLOM_IMPOR.slice(0, 4).join(", ")}. Ditambah No HP dan {KOLOM_BIODATA_IMPOR.length} kolom biodata yang boleh kosong
+            {bolehBiodata ? "" : " (biodata hanya tersimpan kalau yang mengimpor Administrator)"}.
+          </p>
           <div>
             <md-outlined-button has-icon type="button" onClick={unduhTemplate}>
               <Download slot="icon" size={18} />
@@ -211,6 +271,12 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
             </div>
           </div>
 
+          {adaKolomBiodata && !bolehBiodata && (
+            <p className="rounded-2xl bg-warning-container px-4 py-3 text-sm text-on-warning-container">
+              File ini berisi kolom biodata. Biodata hanya boleh diisi Administrator, jadi kolom biodata akan diabaikan saat disimpan.
+            </p>
+          )}
+
           {bermasalah > 0 && (
             <label className="flex w-fit cursor-pointer items-center gap-2 text-sm">
               <input type="checkbox" checked={hanyaMasalah} onChange={(e) => setHanyaMasalah(e.target.checked)} className="size-4 accent-primary" />
@@ -224,9 +290,10 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
                 <tr>
                   <th className="px-3 py-2.5">Baris</th>
                   <th className="px-3 py-2.5">Nama</th>
-                  <th className="hidden px-3 py-2.5 sm:table-cell">Kelompok</th>
+                  <th className="hidden px-3 py-2.5 sm:table-cell">Jenis kelamin</th>
                   <th className="hidden px-3 py-2.5 md:table-cell">Kelompok</th>
                   <th className="hidden px-3 py-2.5 md:table-cell">Tanggal lahir</th>
+                  {adaKolomBiodata && <th className="hidden px-3 py-2.5 lg:table-cell">Biodata</th>}
                   <th className="px-3 py-2.5">Status</th>
                 </tr>
               </thead>
@@ -249,6 +316,11 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
                           b.tanggalLahir || "–"
                         )}
                       </td>
+                      {adaKolomBiodata && (
+                        <td className="hidden px-3 py-2.5 text-on-surface-variant lg:table-cell">
+                          {Object.keys(b.biodata).length ? `${Object.keys(b.biodata).length} kolom terisi` : "–"}
+                        </td>
+                      )}
                       <td className="px-3 py-2.5">
                         {ok ? (
                           <span className="inline-flex items-center gap-1 text-xs font-bold text-primary">
@@ -279,10 +351,16 @@ export function ImporPeserta({ hariIni, sudahAda }: { hariIni: string; sudahAda:
               <RotateCcw slot="icon" size={16} />
               Mulai ulang
             </md-text-button>
-            <md-filled-button type="button" disabled={siap.length === 0} onClick={() => setDiimpor(true)}>
-              Impor {siap.length} peserta
+            <md-filled-button has-icon={menyimpan} type="button" disabled={siap.length === 0 || menyimpan} onClick={simpan}>
+              {menyimpan && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
+              {menyimpan ? "Menyimpan..." : `Impor ${siap.length} pemuda/i`}
             </md-filled-button>
           </div>
+          {galatSimpan && (
+            <p role="alert" className="rounded-2xl bg-error-container px-4 py-3 text-sm text-on-error-container">
+              {galatSimpan}
+            </p>
+          )}
         </section>
       )}
     </div>

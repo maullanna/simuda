@@ -9,7 +9,7 @@
 import { randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
-import { keTampilan, keTanggalDb, keWilayahDb } from "@/lib/data/peserta";
+import { keTampilan, keTanggalDb, keTeksTanggal, keWilayahDb } from "@/lib/data/peserta";
 import { prisma } from "@/lib/db";
 import type { Prisma } from "@/generated/prisma/client";
 import { boleh } from "@/lib/hak-akses";
@@ -278,4 +278,94 @@ export async function hapusPeserta(id: string, ketikNama: string, alasan: string
   ]);
   revalidatePath("/peserta");
   return { ok: true };
+}
+
+// ---------------------------------------------------------------------------
+// Impor banyak pemuda/i dari Excel (KONSEP 5.1). Browser sudah memeriksa dan menampilkan pratinjau;
+// di sini SEMUA baris diperiksa ulang dengan aturan yang sama (form Tambah pemuda/i dan biodata).
+// Baris yang lolos disimpan dalam satu transaksi: tersimpan semua, atau tidak sama sekali.
+
+export type BarisKirimImpor = {
+  nomorBaris: number;
+  nama: string;
+  jenisKelamin: string;
+  wilayah: string;
+  tanggalLahir: string;
+  noHp: string;
+  biodata?: Record<string, string>;
+};
+export type HasilImpor =
+  | { ok: true; jumlah: number; dilewati: { nomorBaris: number; alasan: string }[]; biodataDiabaikan: boolean }
+  | { ok: false; pesan: string };
+
+export async function imporPeserta(baris: BarisKirimImpor[]): Promise<HasilImpor> {
+  const pengguna = await requireRole("imporPeserta", "jalankan");
+  if (!Array.isArray(baris) || baris.length === 0) return { ok: false, pesan: "Tidak ada data untuk diimpor." };
+  if (baris.length > 500) return { ok: false, pesan: "Maksimal 500 baris sekali impor. Bagi file menjadi beberapa bagian." };
+
+  // Biodata hanya untuk Administrator (KONSEP 5.1b); dari level lain kolom biodata diabaikan.
+  const bolehBiodata = boleh(pengguna, "biodata", "ubah");
+  const skema = skemaPeserta(tanggalHariIniWib());
+  const kunci = (nama: string, lahir: string) => `${nama.trim().toLowerCase().replace(/\s+/g, " ")}|${lahir}`;
+  const ada = new Set((await prisma.peserta.findMany({ select: { nama: true, tanggalLahir: true } })).map((p) => kunci(p.nama, keTeksTanggal(p.tanggalLahir))));
+
+  const siap: { data: z.infer<ReturnType<typeof skemaPeserta>>; bio: DataBiodata | null }[] = [];
+  const dilewati: { nomorBaris: number; alasan: string }[] = [];
+  let biodataDiabaikan = false;
+
+  for (const b of baris) {
+    const nomorBaris = Number(b?.nomorBaris) || 0;
+    const cek = skema.safeParse({
+      nama: String(b?.nama ?? ""),
+      jenisKelamin: String(b?.jenisKelamin ?? ""),
+      wilayah: String(b?.wilayah ?? ""),
+      tanggalLahir: String(b?.tanggalLahir ?? ""),
+      noHp: String(b?.noHp ?? ""),
+    });
+    if (!cek.success) {
+      dilewati.push({ nomorBaris, alasan: cek.error.issues[0].message });
+      continue;
+    }
+    const k = kunci(cek.data.nama, cek.data.tanggalLahir);
+    if (ada.has(k)) {
+      dilewati.push({ nomorBaris, alasan: "Sudah terdaftar (nama dan tanggal lahir sama)" });
+      continue;
+    }
+
+    let bio: DataBiodata | null = null;
+    const isiBiodata = b?.biodata && typeof b.biodata === "object" ? b.biodata : {};
+    if (Object.values(isiBiodata).some((v) => String(v ?? "").trim())) {
+      if (!bolehBiodata) biodataDiabaikan = true;
+      else {
+        const c = skemaBiodata.safeParse(Object.fromEntries(KOLOM_BIODATA.map((kol) => [kol, String(isiBiodata[kol] ?? "")])));
+        if (!c.success) {
+          dilewati.push({ nomorBaris, alasan: `Biodata: ${c.error.issues[0].message}` });
+          continue;
+        }
+        bio = c.data;
+      }
+    }
+    ada.add(k);
+    siap.push({ data: cek.data, bio });
+  }
+
+  if (siap.length > 0) {
+    await prisma.$transaction(
+      async (tx) => {
+        for (const { data: d, bio } of siap) {
+          const p = await tx.peserta.create({
+            data: { nama: d.nama, jenisKelamin: d.jenisKelamin, wilayah: keWilayahDb(d.wilayah), tanggalLahir: keTanggalDb(d.tanggalLahir), noHp: d.noHp || null, status: "aktif" },
+          });
+          await tx.kartu.create({ data: { pesertaId: p.id, token: tokenAcak() } });
+          await tx.auditLog.create({
+            data: { userId: pengguna.userId, tabel: "peserta", recordId: p.id, aksi: "buat", dataBaru: keTampilan(p), alasan: "Impor dari Excel" },
+          });
+          if (bio) await tulisBiodata(tx, p.id, bio, pengguna);
+        }
+      },
+      { timeout: 120_000 },
+    );
+    revalidatePath("/peserta");
+  }
+  return { ok: true, jumlah: siap.length, dilewati, biodataDiabaikan };
 }
