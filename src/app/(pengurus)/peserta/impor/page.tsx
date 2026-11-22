@@ -21,7 +21,7 @@ export default async function ImporPesertaPage() {
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-2">
         <Link href="/peserta" className="flex w-fit items-center gap-1 text-sm font-semibold text-on-surface-variant hover:text-on-surface">
-          <ArrowLeft size={16} /> Peserta
+          <ArrowLeft size={16} /> Pemuda/i
         </Link>
         <h1 className="text-2xl font-extrabold lg:text-3xl">Impor dari Excel</h1>
         <p className="text-on-surface-variant">Tambahkan banyak peserta sekaligus. Setiap baris diperiksa dulu sebelum diimpor.</p>

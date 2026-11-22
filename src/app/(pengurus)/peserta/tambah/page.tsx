@@ -8,7 +8,7 @@ import { requireRole } from "@/lib/pengguna";
 import { tanggalHariIniWib } from "@/lib/peserta";
 
 export const metadata: Metadata = {
-  title: "Tambah peserta · SIMUDA",
+  title: "Tambah pemuda/i · SIMUDA",
 };
 
 export default async function TambahPesertaPage() {
@@ -24,9 +24,9 @@ export default async function TambahPesertaPage() {
           href="/peserta"
           className="flex w-fit items-center gap-1 text-sm font-semibold text-on-surface-variant hover:text-on-surface"
         >
-          <ArrowLeft size={16} /> Peserta
+          <ArrowLeft size={16} /> Pemuda/i
         </Link>
-        <h1 className="text-2xl font-extrabold lg:text-3xl">Tambah peserta</h1>
+        <h1 className="text-2xl font-extrabold lg:text-3xl">Tambah pemuda/i</h1>
       </header>
       <FormPeserta hariIni={tanggalHariIniWib()} bolehBiodata={boleh(pengguna, "biodata", "ubah")} />
     </div>

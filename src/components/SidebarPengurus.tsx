@@ -8,6 +8,7 @@ import { TombolAkunSaya } from "@/components/TombolAkunSaya";
 import { TombolKeluar } from "@/components/TombolKeluar";
 import { boleh, type HakPengguna } from "@/lib/hak-akses";
 import { kelompokMenu, menuAktif } from "@/lib/menu";
+import { VERSI } from "@/lib/versi";
 
 // Data pengguna yang sedang masuk, dikirim dari layout (server) yang sudah memeriksa sesinya.
 export type InfoPengguna = { nama: string; jabatan: string; wilayah: string } & HakPengguna;
@@ -25,7 +26,9 @@ function Logo({ ciut }: { ciut: boolean }) {
       </div>
       {!ciut && (
         <div className="whitespace-nowrap leading-tight">
-          <p className="font-extrabold">SIMUDA</p>
+          <p className="flex items-baseline gap-1.5 font-extrabold">
+            SIMUDA <span className="rounded-md bg-surface-highest px-1.5 py-px text-[10px] font-bold text-on-surface-variant">{`v${VERSI}`}</span>
+          </p>
           <p className="text-xs text-on-surface-variant">Bendlay 2 & 4</p>
         </div>
       )}
@@ -75,7 +78,16 @@ function IsiSidebar({ ciut, pengguna, saatNavigasi }: { ciut: boolean; pengguna:
                     strokeWidth={aktif ? 2.25 : 1.75}
                     className={`shrink-0 transition-transform ${pegas} group-hover:scale-110 ${ciut ? "" : "group-hover:translate-x-0.5"}`}
                   />
-                  {ciut ? <LabelMelayang teks={item.label} /> : <span className="whitespace-nowrap">{item.label}</span>}
+                  {ciut ? (
+                    <LabelMelayang teks={item.segera ? `${item.label} (segera)` : item.label} />
+                  ) : (
+                    <span className="flex min-w-0 flex-1 items-center gap-2 whitespace-nowrap">
+                      {item.label}
+                      {item.segera && (
+                        <span className="ml-auto rounded-md bg-warning-container px-1.5 py-px text-[10px] font-bold text-on-warning-container">Segera</span>
+                      )}
+                    </span>
+                  )}
                 </Link>
               );
             })}

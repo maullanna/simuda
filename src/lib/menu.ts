@@ -5,6 +5,8 @@ import {
   LayoutDashboard,
   MessagesSquare,
   Network,
+  Baby,
+  UsersRound,
   ShieldCheck,
   ScanLine,
   Users,
@@ -15,18 +17,26 @@ import type { Fitur } from "@/lib/hak-akses";
 
 // Daftar menu pengurus. Dipakai sidebar (untuk tautan) dan navbar (untuk judul halaman).
 
-export type ItemMenu = { label: string; href: string; ikon: LucideIcon; fitur: Fitur };
+// segera = menu sudah ada, isinya belum (ditandai label "Segera" di sidebar).
+export type ItemMenu = { label: string; href: string; ikon: LucideIcon; fitur: Fitur; segera?: boolean };
 
-// Menu dikelompokkan supaya mudah dipindai: kegiatan pengajian dulu, lalu organisasi.
+// Menu dikelompokkan supaya mudah dipindai: kegiatan pengajian, master data (orang), lalu organisasi.
 export const kelompokMenu: { judul: string; item: ItemMenu[] }[] = [
   {
     judul: "Pengajian",
     item: [
       { label: "Beranda", href: "/dashboard", ikon: LayoutDashboard, fitur: "beranda" },
-      { label: "Peserta", href: "/peserta", ikon: Users, fitur: "peserta" },
       { label: "Absensi", href: "/absensi", ikon: ScanLine, fitur: "daftarHadir" },
       { label: "Jadwal & materi", href: "/jadwal", ikon: CalendarDays, fitur: "sesi" },
       { label: "Rekap", href: "/rekap", ikon: ChartColumn, fitur: "rekap" },
+    ],
+  },
+  {
+    judul: "Master data",
+    item: [
+      { label: "Pemuda/i", href: "/peserta", ikon: Users, fitur: "peserta" },
+      { label: "Bapak & Ibu", href: "/bapak-ibu", ikon: UsersRound, fitur: "bapakIbu", segera: true },
+      { label: "Caberawit", href: "/caberawit", ikon: Baby, fitur: "caberawit", segera: true },
     ],
   },
   {

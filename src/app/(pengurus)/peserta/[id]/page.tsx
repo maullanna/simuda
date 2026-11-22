@@ -12,7 +12,7 @@ import { hitungUmur, kategoriPeserta, labelJenisKelamin, labelKategori } from "@
 import { formatTanggal } from "@/lib/sesi";
 
 export const metadata: Metadata = {
-  title: "Profil peserta · SIMUDA",
+  title: "Profil pemuda/i · SIMUDA",
 };
 
 function Baris({ label, isi }: { label: string; isi: React.ReactNode }) {
@@ -40,7 +40,7 @@ export default async function ProfilPesertaPage(props: PageProps<"/peserta/[id]"
     <div className="flex flex-col gap-6">
       <header className="flex flex-col gap-3">
         <Link href="/peserta" className="flex w-fit items-center gap-1 text-sm font-semibold text-on-surface-variant hover:text-on-surface">
-          <ArrowLeft size={16} /> Peserta
+          <ArrowLeft size={16} /> Pemuda/i
         </Link>
         <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
           <div>

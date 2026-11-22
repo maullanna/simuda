@@ -59,7 +59,7 @@ export async function simpanPeserta(id: string | null, form: FormData): Promise<
     },
     select: { id: true },
   });
-  if (ganda) return { ok: false, galat: { nama: "Peserta dengan nama dan tanggal lahir ini sudah terdaftar" } };
+  if (ganda) return { ok: false, galat: { nama: "Pemuda/i dengan nama dan tanggal lahir ini sudah terdaftar" } };
 
   const data = {
     nama: d.nama,
@@ -85,7 +85,7 @@ export async function simpanPeserta(id: string | null, form: FormData): Promise<
   }
 
   const lama = await prisma.peserta.findUnique({ where: { id } });
-  if (!lama) return { ok: false, galat: {}, pesan: "Peserta tidak ditemukan." };
+  if (!lama) return { ok: false, galat: {}, pesan: "Data pemuda/i tidak ditemukan." };
 
   await prisma.$transaction(async (tx) => {
     // Status tidak diubah dari sini: suspend/pulihkan lewat aksi tersendiri yang mewajibkan alasan (KONSEP 3.3).
@@ -116,8 +116,8 @@ export async function gantiKartu(pesertaId: string, alasan: string): Promise<Has
   if (!cek.success) return { ok: false, pesan: "Isian tidak valid." };
 
   const peserta = await prisma.peserta.findUnique({ where: { id: pesertaId }, select: { status: true } });
-  if (!peserta) return { ok: false, pesan: "Peserta tidak ditemukan." };
-  if (peserta.status !== "aktif") return { ok: false, pesan: "Peserta tidak aktif, kartunya tidak bisa diganti." };
+  if (!peserta) return { ok: false, pesan: "Data pemuda/i tidak ditemukan." };
+  if (peserta.status !== "aktif") return { ok: false, pesan: "Pemuda/i ini tidak aktif, kartunya tidak bisa diganti." };
 
   const baru = await prisma.$transaction(async (tx) => {
     const lama = await tx.kartu.updateMany({
@@ -183,7 +183,7 @@ export async function simpanBiodata(pesertaId: string, form: FormData): Promise<
   const hasil = bacaBiodata(form);
   if (!hasil.success) return { ok: false, galat: galatDari(hasil.error), pesan: "Periksa lagi isian yang ditandai." };
   if (!(await prisma.peserta.findUnique({ where: { id: pesertaId }, select: { id: true } }))) {
-    return { ok: false, galat: {}, pesan: "Peserta tidak ditemukan." };
+    return { ok: false, galat: {}, pesan: "Data pemuda/i tidak ditemukan." };
   }
 
   await prisma.$transaction((tx) => tulisBiodata(tx, pesertaId, hasil.data, pengguna));
@@ -204,8 +204,8 @@ export async function suspendPeserta(id: string, alasan: string): Promise<HasilS
   const cek = skemaAlasan.safeParse(alasan);
   if (!cek.success) return { ok: false, pesan: cek.error.issues[0].message };
   const p = await prisma.peserta.findUnique({ where: { id }, select: { status: true } });
-  if (!p) return { ok: false, pesan: "Peserta tidak ditemukan." };
-  if (p.status === "tidak_aktif") return { ok: false, pesan: "Peserta ini sudah di-suspend." };
+  if (!p) return { ok: false, pesan: "Data pemuda/i tidak ditemukan." };
+  if (p.status === "tidak_aktif") return { ok: false, pesan: "Pemuda/i ini sudah di-suspend." };
 
   await prisma.$transaction([
     prisma.peserta.update({ where: { id }, data: { status: "tidak_aktif" } }),
@@ -228,8 +228,8 @@ export async function pulihkanPeserta(id: string, alasan: string): Promise<Hasil
   const cek = skemaAlasan.safeParse(alasan);
   if (!cek.success) return { ok: false, pesan: cek.error.issues[0].message };
   const p = await prisma.peserta.findUnique({ where: { id }, select: { status: true } });
-  if (!p) return { ok: false, pesan: "Peserta tidak ditemukan." };
-  if (p.status === "aktif") return { ok: false, pesan: "Peserta ini sudah aktif." };
+  if (!p) return { ok: false, pesan: "Data pemuda/i tidak ditemukan." };
+  if (p.status === "aktif") return { ok: false, pesan: "Pemuda/i ini sudah aktif." };
 
   await prisma.$transaction(async (tx) => {
     await tx.peserta.update({ where: { id }, data: { status: "aktif" } });
@@ -254,8 +254,8 @@ export async function hapusPeserta(id: string, ketikNama: string, alasan: string
   if (!cek.success) return { ok: false, pesan: cek.error.issues[0].message };
 
   const p = await prisma.peserta.findUnique({ where: { id }, include: { biodata: true, _count: { select: { kehadiran: true, kartu: true } } } });
-  if (!p) return { ok: false, pesan: "Peserta tidak ditemukan." };
-  if (p.status !== "tidak_aktif") return { ok: false, pesan: "Suspend peserta ini dulu sebelum menghapus permanen." };
+  if (!p) return { ok: false, pesan: "Data pemuda/i tidak ditemukan." };
+  if (p.status !== "tidak_aktif") return { ok: false, pesan: "Suspend pemuda/i ini dulu sebelum menghapus permanen." };
   if (ketikNama.trim().toLowerCase() !== p.nama.toLowerCase()) return { ok: false, pesan: "Nama yang diketik tidak sama." };
 
   const { biodata, _count, ...dataPeserta } = p;

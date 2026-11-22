@@ -281,7 +281,7 @@ export function FormPeserta({
         <md-text-button href="/peserta">Batal</md-text-button>
         <md-filled-button has-icon={proses} type="submit" disabled={proses}>
           {proses && <LoaderCircle slot="icon" size={18} className="animate-spin" />}
-          {proses ? "Menyimpan..." : modeUbah ? "Simpan perubahan" : "Simpan peserta"}
+          {proses ? "Menyimpan..." : modeUbah ? "Simpan perubahan" : "Simpan pemuda/i"}
         </md-filled-button>
       </div>
     </form>

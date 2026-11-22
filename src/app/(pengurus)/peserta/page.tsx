@@ -17,7 +17,7 @@ import {
 } from "@/lib/peserta";
 
 export const metadata: Metadata = {
-  title: "Peserta · SIMUDA",
+  title: "Pemuda/i · SIMUDA",
 };
 
 // Semua filter disimpan di URL, misalnya /peserta?kategori=remaja&jk=putri&q=siti
@@ -118,9 +118,9 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
       <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
         <div>
           {/* Judul sudah tampil di navbar; h1 tetap ada untuk pembaca layar */}
-          <h1 className="sr-only">Peserta</h1>
+          <h1 className="sr-only">Pemuda/i</h1>
           <p className="text-on-surface-variant">
-            {jumlahPerTab.semua} peserta {statusDicari === "aktif" ? "aktif" : "tidak aktif"}
+            {jumlahPerTab.semua} pemuda/i {statusDicari === "aktif" ? "aktif" : "tidak aktif"}
           </p>
         </div>
         {/* Tombol kelola hanya untuk peran yang boleh; server tetap memeriksa ulang lewat requireRole */}
@@ -128,7 +128,7 @@ export default async function PesertaPage(props: PageProps<"/peserta">) {
           <div className="flex flex-wrap gap-2">
             {bolehImpor && <md-outlined-button href="/peserta/impor">Impor Excel</md-outlined-button>}
             {bolehKartu && <md-filled-tonal-button href="/peserta/kartu">Cetak kartu</md-filled-tonal-button>}
-            {bolehTambah && <md-filled-button href="/peserta/tambah">Tambah peserta</md-filled-button>}
+            {bolehTambah && <md-filled-button href="/peserta/tambah">Tambah pemuda/i</md-filled-button>}
           </div>
         )}
       </header>

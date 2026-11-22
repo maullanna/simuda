@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { TombolTema } from "@/components/TombolTema";
+import { NAMA_VERSI } from "@/lib/versi";
 
 // Kerangka halaman masuk: kartu di tengah layar dengan logo, judul, dan tombol kembali.
 // Dipakai juga oleh halaman Akun saya, dengan tombol kembali ke Beranda/Scanner.
@@ -37,6 +38,7 @@ export function KerangkaMasuk({
         </div>
         {children}
       </section>
+      <p className="pt-4 text-center text-xs text-on-surface-variant/70">{NAMA_VERSI}</p>
     </main>
   );
 }

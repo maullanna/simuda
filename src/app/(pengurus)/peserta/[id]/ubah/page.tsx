@@ -11,7 +11,7 @@ import { requireRole } from "@/lib/pengguna";
 import { tanggalHariIniWib } from "@/lib/peserta";
 
 export const metadata: Metadata = {
-  title: "Ubah peserta · SIMUDA",
+  title: "Ubah pemuda/i · SIMUDA",
 };
 
 // [id] di nama folder berarti bagian URL itu berubah-ubah:
@@ -33,7 +33,7 @@ export default async function UbahPesertaPage(props: PageProps<"/peserta/[id]/ub
           href="/peserta"
           className="flex w-fit items-center gap-1 text-sm font-semibold text-on-surface-variant hover:text-on-surface"
         >
-          <ArrowLeft size={16} /> Peserta
+          <ArrowLeft size={16} /> Pemuda/i
         </Link>
         <h1 className="text-2xl font-extrabold lg:text-3xl">Ubah peserta</h1>
         <p className="text-on-surface-variant">{peserta.nama}</p>

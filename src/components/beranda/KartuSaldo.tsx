@@ -20,7 +20,6 @@ export function KartuSaldo({ saldo, masuk, keluar }: { saldo: number; masuk: num
           <div className="grid size-8 place-items-center rounded-xl bg-primary text-sm font-extrabold text-on-primary">S</div>
           <div className="leading-tight">
             <p className="text-sm font-extrabold">Sodaqoh</p>
-            <p className="text-xs opacity-75">Kas bersama</p>
           </div>
         </div>
         <Wallet size={20} className="opacity-70 transition-transform duration-500 group-hover:-rotate-12" />

@@ -31,10 +31,13 @@ type InfoFitur = {
 
 export const DAFTAR_FITUR = {
   beranda: { kelompok: "Beranda", label: "Beranda pengurus", awal: ["L", "L", "L", "L", "L", "L", "L", "–"] },
-  peserta: { kelompok: "Peserta", label: "Data peserta", awal: ["LTUS", "L", "LTUS", "LTUS", "LTUS", "L", "L", "–"] },
-  imporPeserta: { kelompok: "Peserta", label: "Impor peserta dari Excel", awal: ["Ya", "–", "Ya", "Ya", "Ya", "–", "–", "–"] },
-  kartu: { kelompok: "Peserta", label: "Kartu: cetak, ganti kartu hilang", awal: ["LTS", "L", "LTS", "LTS", "LTS", "–", "–", "–"] },
-  biodata: { kelompok: "Peserta", label: "Biodata muda/i (profil untuk Tim PnKB)", awal: ["LU", "–", "–", "–", "–", "–", "–", "–"] },
+  peserta: { kelompok: "Master data", label: "Data pemuda/i", awal: ["LTUS", "L", "LTUS", "LTUS", "LTUS", "L", "L", "–"] },
+  imporPeserta: { kelompok: "Master data", label: "Impor pemuda/i dari Excel", awal: ["Ya", "–", "Ya", "Ya", "Ya", "–", "–", "–"] },
+  kartu: { kelompok: "Master data", label: "Kartu: cetak, ganti kartu hilang", awal: ["LTS", "L", "LTS", "LTS", "LTS", "–", "–", "–"] },
+  biodata: { kelompok: "Master data", label: "Biodata muda/i (profil untuk Tim PnKB)", awal: ["LU", "–", "–", "–", "–", "–", "–", "–"] },
+  // Menu baru (disiapkan, isiannya menyusul): orang tua dan anak-anak PAUD–kelas 6.
+  bapakIbu: { kelompok: "Master data", label: "Data Bapak & Ibu", awal: ["LTUS", "L", "LTUS", "LTUS", "LTUS", "L", "L", "–"] },
+  caberawit: { kelompok: "Master data", label: "Data Caberawit (PAUD–kelas 6)", awal: ["LTUS", "L", "LTUS", "LTUS", "LTUS", "L", "L", "–"] },
   daftarHadir: { kelompok: "Absensi", label: "Daftar hadir per sesi", awal: ["L", "L", "L", "L", "L", "L", "L", "L"] },
   bukaTutupSesi: { kelompok: "Absensi", label: "Buka dan tutup sesi", awal: ["Ya", "–", "Ya", "Ya", "Ya", "–", "Ya", "–"] },
   scan: { kelompok: "Absensi", label: "Scan kehadiran", awal: ["Ya", "–", "Ya", "Ya", "Ya", "Ya", "Ya", "Ya"] },

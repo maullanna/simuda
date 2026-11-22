@@ -76,7 +76,9 @@ Kode: **L** = lihat, **T** = tambah, **U** = ubah, **S** = suspend dan pulihkan 
 | **Beranda** | | | | | | | | | |
 | Beranda pengurus | L | L | L | L | L | L | L | – | Beranda sendiri |
 | **Peserta** | | | | | | | | | |
-| Data peserta | LTUS | L | LTUS | LTUS | LTUS | L | L | – | Data sendiri: L, U (no HP, foto) |
+| Data pemuda/i | LTUS | L | LTUS | LTUS | LTUS | L | L | – | Data sendiri: L, U (no HP, foto) |
+| Data Bapak & Ibu | LTUS | L | LTUS | LTUS | LTUS | L | L | – | – |
+| Data Caberawit (PAUD–kelas 6) | LTUS | L | LTUS | LTUS | LTUS | L | L | – | – |
 | Impor peserta dari Excel | Ya | – | Ya | Ya | Ya | – | – | – | – |
 | Kartu: cetak, ganti kartu hilang | LTS | L | LTS | LTS | LTS | – | – | – | Kartu sendiri: L |
 | Biodata muda/i (profil untuk Tim PnKB) | LU | – | – | – | – | – | – | – | Data sendiri: L, U |
@@ -163,10 +165,14 @@ Hapus permanen hanya ada untuk Administrator, untuk keadaan khusus seperti data 
 
 ### 4.1 Pengurus (sidebar)
 
+Sidebar dibagi tiga grup: **Pengajian** (Beranda, Absensi, Jadwal & materi, Rekap), **Master data** (Pemuda/i, Bapak & Ibu, Caberawit), dan **Organisasi** (Sodaqoh, Musyawarah, Masukan, Kepengurusan, Level pengguna). Di tampilan, istilah "peserta" untuk muda/i ditulis **Pemuda/i**.
+
 | Menu | URL | Isi |
 |---|---|---|
 | Beranda | `/dashboard` | Pengajian hari ini (jumlah hadir putra dan putri), tombol buka scanner, ringkasan angka (peserta aktif, hadir terakhir, izin minggu ini, saldo sodaqoh), grafik kehadiran 8 pengajian terakhir, daftar perlu dihubungi, jadwal minggu ini, sodaqoh terbaru |
-| Peserta | `/peserta` | Tab Semua / Pra-remaja / Remaja / Pra-nikah, filter Putra/Putri dan Bendlay 2/4, pencarian nama, tabel peserta, tombol Impor Excel, Cetak kartu, Tambah peserta |
+| Pemuda/i | `/peserta` | Master data muda/i. Tab Semua / Pra-remaja / Remaja / Pra-nikah, filter Putra/Putri dan Bendlay 2/4, pencarian nama, tabel peserta, tombol Impor Excel, Cetak kartu, Tambah peserta |
+| Bapak & Ibu | `/bapak-ibu` | Master data orang tua (Bapak dan Ibu) di Bendlay 2/4. **Menu disiapkan, isian menunggu kolom disepakati** |
+| Caberawit | `/caberawit` | Master data anak-anak PAUD sampai kelas 6. **Menu disiapkan, isian menunggu kolom disepakati** |
 | Absensi | `/absensi` | Sesi hari ini dengan progres kehadiran, tombol buka scanner, input manual, tutup sesi, riwayat sesi, daftar izin tercatat |
 | Jadwal & materi | `/jadwal` | Jadwal rutin, sesi mendatang (materi dan pemateri), catatan pengajian terakhir |
 | Rekap | `/rekap` | Rekap bulanan, filter kelompok dan kategori, grafik kehadiran, daftar perlu dihubungi, rincian sesi, unduh Excel/PDF |
@@ -424,6 +430,7 @@ Detail harian ada di file `Timeline-Sistem-Pengajian.xlsx`.
 | Biodata muda/i | Untuk Tim PnKB. Hanya pemiliknya sendiri dan Administrator yang bisa melihat dan mengubah. Kipok dan Tim PnKB diisi per kelompok (diputuskan 11 Oktober 2026) |
 | Hapus data | Pengurus hanya bisa suspend (dengan alasan, bisa dipulihkan). Hapus permanen hanya oleh Administrator, untuk data yang sudah di-suspend (diputuskan 10 Oktober 2026) |
 | Level pengguna | Hak akses diatur per level dan bisa dicentang Administrator per fitur dan tindakan. Level Administrator terkunci akses penuh (diputuskan 11 Oktober 2026) |
+| Versi aplikasi | Ditampilkan "SIMUDA v0.1" di sidebar dan halaman masuk, diambil dari `version` di package.json. Setiap pembaruan yang dirilis, versi dinaikkan: fitur baru → 0.2, 0.3, …; perbaikan kecil → 0.1.1 (diputuskan 22 November 2026) |
 
 ---
 
@@ -439,4 +446,5 @@ Detail harian ada di file `Timeline-Sistem-Pengajian.xlsx`.
 - [ ] Siapa yang menyimpan bukti persetujuan wali untuk peserta remaja?
 - [ ] Peserta di luar sasaran yang ikut hadir: tetap dicatat hadir?
 - [ ] Hak akses pada bagian 3.2 sudah sesuai? (perlu dikonfirmasi ke Ketua Muda/i)
+- [ ] Data Bapak & Ibu dan Caberawit: kolom apa saja yang dicatat? Ikut absensi pengajian atau hanya data? (menu sudah disiapkan, 22 November 2026)
 - [x] Kalau peserta atau walinya meminta datanya dihapus: Administrator men-suspend lalu menghapus permanen (bagian 3.4).

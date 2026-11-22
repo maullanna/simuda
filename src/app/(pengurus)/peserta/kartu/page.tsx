@@ -33,7 +33,7 @@ export default async function CetakKartuPage(props: PageProps<"/peserta/kartu">)
           href="/peserta"
           className="flex w-fit items-center gap-1 text-sm font-semibold text-on-surface-variant hover:text-on-surface"
         >
-          <ArrowLeft size={16} /> Peserta
+          <ArrowLeft size={16} /> Pemuda/i
         </Link>
         <h1 className="text-2xl font-extrabold lg:text-3xl">Cetak kartu</h1>
         <p className="text-on-surface-variant">Pilih peserta, buat PDF, lalu cetak di kertas A4 dan laminating.</p>
